@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(tar -tzf housing.tgz)",
+      "Bash(tar -xzf housing.tgz -O)",
+      "Bash(python main.py)"
+    ]
+  }
+}

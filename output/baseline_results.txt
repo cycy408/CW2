@@ -1,0 +1,22 @@
+==================================================
+基础线性回归模型性能
+==================================================
+MSE:  4908476721.156617
+MAE:  50670.738241
+RMSE: 70060.521845
+==================================================
+
+模型系数:
+  longitude   : -53826.648016
+  latitude    : -54415.696144
+  housing_median_age: 13889.866189
+  total_rooms : -13094.251162
+  total_bedrooms: 43068.181842
+  population  : -43403.432427
+  households  : 18382.196324
+  median_income: 75167.774766
+  ocean_proximity_<1H OCEAN: 6424.355629
+  ocean_proximity_INLAND: -12492.687560
+  ocean_proximity_ISLAND: 2319.634266
+  ocean_proximity_NEAR BAY: 2459.945709
+  ocean_proximity_NEAR OCEAN: 5435.010056
