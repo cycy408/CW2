@@ -14,6 +14,7 @@ import numpy as np
 from sklearn.linear_model import LinearRegression
 
 from data_prep import load_data, split_data, standardize_features
+import advanced
 from feature_selection import (
     select_features_numpy,
     select_features_sklearn,
@@ -149,6 +150,8 @@ def main():
     print(f"\n最佳模型: Random Forest ({best_method}), MSE = {best_mse:.2f}")
     print(f"相比线性回归 (MSE={mse_lr:.2f})，MSE 降低 {(mse_lr - best_mse) / mse_lr * 100:.1f}%")
 
+    
+
     # ========== 9. 保存结果 ==========
     os.makedirs("output", exist_ok=True)
     with open("output/baseline_results.txt", "w", encoding="utf-8") as f:
@@ -172,4 +175,9 @@ def main():
 
 
 if __name__ == "__main__":
+    print()
     main()
+    print("\n" + "=" * 60)
+    print("Advanced 层分析")
+    print("=" * 60)
+    advanced.main()

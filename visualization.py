@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import os
 
-def plot_mse_comparison(mse_dict, save_path="output/mse_comparison.png"):
+def plot_mse_comparison(mse_dict, save_path="output/mse_comparison.png", title="Feature Selection Methods vs Test MSE"):
     """
     绘制不同模型的 MSE 柱状图
     mse_dict: 字典，键为模型名称（字符串），值为 MSE 数值
@@ -23,7 +23,7 @@ def plot_mse_comparison(mse_dict, save_path="output/mse_comparison.png"):
     colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728'][:len(models)]
     bars = plt.bar(models, mse_values, color=colors)
     plt.ylabel("Mean Squared Error (MSE)", fontsize=12)
-    plt.title("Feature Selection Methods vs Test MSE", fontsize=14)
+    plt.title(title, fontsize=14)
     plt.xticks(rotation=15, ha='right')
     
     # 在柱子上方标注数值
