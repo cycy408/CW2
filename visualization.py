@@ -1,10 +1,3 @@
-"""
-visualization.py - 可视化模块
-包含：
-- plot_mse_comparison      : 模型 MSE 对比柱状图
-- plot_geospatial_heatmap  : 预测误差地理空间热图
-"""
-
 import os
 import numpy as np
 import matplotlib.pyplot as plt
@@ -17,16 +10,12 @@ def _ensure_dir(path):
 
 
 def plot_mse_comparison(mse_dict, save_path="output/mse_comparison.png",
-                        title="Feature Selection Methods vs Test MSE"):
-    """
-    绘制不同模型的 MSE 柱状图。
-    mse_dict: {模型名称: MSE 数值}
-    """
+                        title="Feature Selection Method vs. Test Set MSE"):
     _ensure_dir(save_path)
 
-    models     = list(mse_dict.keys())
+    models = list(mse_dict.keys())
     mse_values = list(mse_dict.values())
-    colors     = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728'][:len(models)]
+    colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728'][:len(models)]
 
     plt.figure(figsize=(8, 5))
     bars = plt.bar(models, mse_values, color=colors)
@@ -42,22 +31,15 @@ def plot_mse_comparison(mse_dict, save_path="output/mse_comparison.png",
     plt.tight_layout()
     plt.savefig(save_path, dpi=150)
     plt.close()
-    print(f"柱状图已保存至 {save_path}")
+    print(f"[OK] Chart saved to {save_path}")
 
 
 def plot_geospatial_heatmap(X_test, y_test, y_pred, lat_idx, lon_idx,
                             grid_size=10, save_path="output/geospatial_heatmap.png"):
-    """
-    将测试集预测误差映射到地理网格，绘制空间热图。
-    X_test   : 原始（未标准化）测试特征，含经纬度列
-    lat_idx  : 纬度列索引
-    lon_idx  : 经度列索引
-    grid_size: 网格边长（格数）
-    """
     _ensure_dir(save_path)
 
-    lats   = X_test[:, lat_idx]
-    lons   = X_test[:, lon_idx]
+    lats = X_test[:, lat_idx]
+    lons = X_test[:, lon_idx]
     errors = np.abs(np.asarray(y_test) - np.asarray(y_pred))
 
     lat_bins = np.linspace(lats.min(), lats.max(), grid_size + 1)
@@ -81,8 +63,8 @@ def plot_geospatial_heatmap(X_test, y_test, y_pred, lat_idx, lon_idx,
     plt.colorbar(img, label='Mean Absolute Error')
     plt.xlabel('Longitude')
     plt.ylabel('Latitude')
-    plt.title('Geospatial Prediction Error Heatmap')
+    plt.title(f'Geospatial Prediction Error Heatmap ({grid_size}x{grid_size} grid)')
     plt.tight_layout()
     plt.savefig(save_path, dpi=150)
     plt.close()
-    print(f"地理热图已保存至 {save_path}")
+    print(f"[OK] Heatmap saved to {save_path}")

@@ -1,26 +1,18 @@
 ==================================================
-模型性能对比
+Model Performance Comparison
 ==================================================
-Linear Regression (全特征)    MSE: 4908476721.156617   RMSE: 70060.521845
-Random Forest (全特征)        MSE: 2395314930.144464   RMSE: 48941.954703
-Random Forest (NumPy 5特征)   MSE: 4825542706.444167
-Random Forest (Sklearn 5特征) MSE: 4825604317.128493
+Linear Regression (all)    MSE: 0.555892   RMSE: 0.745581
+Random Forest (all)        MSE: 0.255170   RMSE: 0.505143
+RF (NumPy Pearson 5)       MSE: 0.453221
+RF (SelectKBest 5)         MSE: 0.453362
 ==================================================
 
-最佳模型: Random Forest (全特征), MSE = 2395314930.144464
-相比线性回归，MSE 降低 51.2%
-
-线性回归模型系数:
-  longitude                : -53826.648016
-  latitude                 : -54415.696144
-  housing_median_age       : 13889.866189
-  total_rooms              : -13094.251162
-  total_bedrooms           : 43068.181842
-  population               : -43403.432427
-  households               : 18382.196324
-  median_income            : 75167.774766
-  ocean_proximity_<1H OCEAN: 6424.355629
-  ocean_proximity_INLAND   : -12492.687560
-  ocean_proximity_ISLAND   : 2319.634266
-  ocean_proximity_NEAR BAY : 2459.945709
-  ocean_proximity_NEAR OCEAN: 5435.010056
+Linear Regression Coefficients:
+  MedInc         : 0.854383
+  HouseAge       : 0.122546
+  AveRooms       : -0.294410
+  AveBedrms      : 0.339259
+  Population     : -0.002308
+  AveOccup       : -0.040829
+  Latitude       : -0.896929
+  Longitude      : -0.869842
