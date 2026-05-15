@@ -3,8 +3,8 @@ from sklearn.linear_model import LinearRegression
 
 from data_prep import load_data, split_data, standardize_features
 from feature_selection import select_features_numpy, select_features_fregression, compare_feature_sets
-from models import train_random_forest, fuse_predictions
-from evaluation import compute_mse, compute_mae
+from models import train_random_forest, fuse_predictions, print_feature_importance
+from evaluation import compute_mse, compute_mae, compute_r2
 from visualization import plot_mse_comparison
 
 
@@ -58,11 +58,15 @@ def main(data=None):
     print("Training: Random Forest (NumPy Pearson features)")
     print("=" * 50)
     rf_np_model = train_random_forest(X_train_np, y_train)
+    print("Feature Importance (NumPy Pearson features):")
+    print_feature_importance(rf_np_model, [feature_names[i] for i in indices_np])
 
-    print(f"{'=' * 50}")
+    print(f"\n{'=' * 50}")
     print("Training: Random Forest (F-Regression features)")
     print("=" * 50)
     rf_freg_model = train_random_forest(X_train_freg, y_train)
+    print("Feature Importance (F-Regression features):")
+    print_feature_importance(rf_freg_model, [feature_names[i] for i in indices_freg])
 
     # --- Predictions ---
     y_pred_lr = lr_model.predict(X_test_scaled)
@@ -75,23 +79,27 @@ def main(data=None):
     # --- Performance comparison ---
     results = {
         "Linear Regression (all features)": (
-            compute_mse(y_test, y_pred_lr), compute_mae(y_test, y_pred_lr)),
+            compute_mse(y_test, y_pred_lr), compute_mae(y_test, y_pred_lr),
+            compute_r2(y_test, y_pred_lr)),
         "RF (NumPy Pearson features)": (
-            compute_mse(y_test, y_pred_rf_np), compute_mae(y_test, y_pred_rf_np)),
+            compute_mse(y_test, y_pred_rf_np), compute_mae(y_test, y_pred_rf_np),
+            compute_r2(y_test, y_pred_rf_np)),
         "RF (F-Regression features)": (
-            compute_mse(y_test, y_pred_rf_freg), compute_mae(y_test, y_pred_rf_freg)),
+            compute_mse(y_test, y_pred_rf_freg), compute_mae(y_test, y_pred_rf_freg),
+            compute_r2(y_test, y_pred_rf_freg)),
         "Weighted Fusion": (
-            compute_mse(y_test, y_pred_fused), compute_mae(y_test, y_pred_fused)),
+            compute_mse(y_test, y_pred_fused), compute_mae(y_test, y_pred_fused),
+            compute_r2(y_test, y_pred_fused)),
     }
 
-    print("\n" + "=" * 62)
+    print("\n" + "=" * 80)
     print("Advanced Layer: Model Performance Comparison")
-    print("=" * 62)
-    print(f"{'Model':<40} {'MSE':>10} {'MAE':>10}")
-    print("-" * 62)
-    for name, (mse, mae) in results.items():
-        print(f"{name:<40} {mse:>10.4f} {mae:>10.4f}")
-    print("=" * 62)
+    print("=" * 80)
+    print(f"{'Model':<40} {'MSE':>10} {'MAE':>10} {'R²':>10}")
+    print("-" * 72)
+    for name, (mse, mae, r2) in results.items():
+        print(f"{name:<40} {mse:>10.4f} {mae:>10.4f} {r2:>10.4f}")
+    print("=" * 80)
 
     # --- Required chart: Feature Selection Method vs. Test Set MSE ---
     fs_mse_dict = {
@@ -105,7 +113,7 @@ def main(data=None):
     )
 
     best_name = min(results, key=lambda k: results[k][0])
-    best_mse, best_mae = results[best_name]
+    best_mse, best_mae, _ = results[best_name]
     print(f"\nBest model: {best_name} (MSE = {best_mse:.4f}, MAE = {best_mae:.4f})")
 
     return {

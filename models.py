@@ -8,6 +8,16 @@ def train_random_forest(X_train, y_train, random_state=42):
     return model
 
 
+def print_feature_importance(model, feature_names):
+    importances = model.feature_importances_
+    idx_sorted = np.argsort(importances)[::-1]
+    print(f"  {'Feature':<15}  Importance")
+    print(f"  {'-' * 25}")
+    for i in idx_sorted:
+        bar = "#" * int(importances[i] * 50)
+        print(f"  {feature_names[i]:<15}  {importances[i]:.4f}  {bar}")
+
+
 # ========== NumPy-only implementation ==========
 def fuse_predictions(pred_list, weights=None):
     if weights is None:

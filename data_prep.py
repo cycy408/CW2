@@ -36,9 +36,27 @@ def split_data(X, y, test_size=0.2, random_state=42):
     return X_train, X_test, y_train, y_test
 
 
+def fill_missing_values(X_train, X_test):
+    print("=" * 50)
+    print("Step 3: Fill Missing Values with Median")
+    print("=" * 50)
+
+    col_medians = np.nanmedian(X_train, axis=0)
+
+    train_filled = np.where(np.isnan(X_train), col_medians, X_train)
+    test_filled = np.where(np.isnan(X_test), col_medians, X_test)
+
+    nan_count_train = np.sum(np.isnan(train_filled))
+    nan_count_test = np.sum(np.isnan(test_filled))
+    print(f"  NaN in train after fill: {nan_count_train}")
+    print(f"  NaN in test  after fill: {nan_count_test}")
+    print()
+    return train_filled, test_filled
+
+
 def standardize_features(X_train, X_test):
     print("=" * 50)
-    print("Step 3: Standardize Features")
+    print("Step 4: Standardize Features")
     print("=" * 50)
 
     scaler = StandardScaler()
