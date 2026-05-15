@@ -4,7 +4,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import LinearRegression
 
 from models import train_random_forest, fuse_predictions
-from feature_selection import select_features_numpy, select_features_sklearn
+from feature_selection import select_features_numpy, select_features_fregression
 from evaluation import compute_mse, compute_mae
 
 
@@ -51,7 +51,7 @@ def retrain_best_model_after_outlier_removal(X, y, best_model_name, outlier_mask
 
     if "Weighted Fusion" in best_model_name:
         indices_np, _ = select_features_numpy(X_train, y_train, k=5)
-        indices_sk, _ = select_features_sklearn(X_train, y_train, k=5)
+        indices_freg, _ = select_features_fregression(X_train, y_train, k=5)
 
         lr = LinearRegression()
         lr.fit(X_train_s, y_train)
@@ -60,20 +60,20 @@ def retrain_best_model_after_outlier_removal(X, y, best_model_name, outlier_mask
         rf_np = train_random_forest(X_train_s[:, indices_np], y_train)
         pred_rf_np = rf_np.predict(X_test_s[:, indices_np])
 
-        rf_sk = train_random_forest(X_train_s[:, indices_sk], y_train)
-        pred_rf_sk = rf_sk.predict(X_test_s[:, indices_sk])
+        rf_freg = train_random_forest(X_train_s[:, indices_freg], y_train)
+        pred_rf_freg = rf_freg.predict(X_test_s[:, indices_freg])
 
-        y_pred = fuse_predictions([pred_lr, pred_rf_np, pred_rf_sk])
+        y_pred = fuse_predictions([pred_lr, pred_rf_np, pred_rf_freg])
 
     elif "NumPy Pearson" in best_model_name:
         indices_np, _ = select_features_numpy(X_train, y_train, k=5)
         model = train_random_forest(X_train_s[:, indices_np], y_train)
         y_pred = model.predict(X_test_s[:, indices_np])
 
-    elif "SelectKBest" in best_model_name:
-        indices_sk, _ = select_features_sklearn(X_train, y_train, k=5)
-        model = train_random_forest(X_train_s[:, indices_sk], y_train)
-        y_pred = model.predict(X_test_s[:, indices_sk])
+    elif "F-Regression" in best_model_name:
+        indices_freg, _ = select_features_fregression(X_train, y_train, k=5)
+        model = train_random_forest(X_train_s[:, indices_freg], y_train)
+        y_pred = model.predict(X_test_s[:, indices_freg])
 
     elif "all" in best_model_name.lower():
         model = train_random_forest(X_train_s, y_train)

@@ -2,7 +2,7 @@ import numpy as np
 from sklearn.linear_model import LinearRegression
 
 from data_prep import load_data, split_data, standardize_features
-from feature_selection import select_features_numpy, select_features_sklearn, compare_feature_sets
+from feature_selection import select_features_numpy, select_features_fregression, compare_feature_sets
 from models import train_random_forest, fuse_predictions
 from evaluation import compute_mse, compute_mae
 from visualization import plot_mse_comparison
@@ -32,20 +32,20 @@ def main(data=None):
     print(f"Pearson scores:   {scores_np}")
 
     print(f"\n{'=' * 50}")
-    print("Feature Selection B: SelectKBest + f_regression")
+    print("Feature Selection B: F-Regression / F-Test (NumPy)")
     print("=" * 50)
-    indices_sk, scores_sk = select_features_sklearn(X_train, y_train, k=5)
-    print(f"Selected indices: {indices_sk}")
-    print(f"Feature names:    {[feature_names[i] for i in indices_sk]}")
-    print(f"F-scores:         {scores_sk}")
+    indices_freg, scores_freg = select_features_fregression(X_train, y_train, k=5)
+    print(f"Selected indices: {indices_freg}")
+    print(f"Feature names:    {[feature_names[i] for i in indices_freg]}")
+    print(f"F-scores:         {scores_freg}")
 
-    compare_feature_sets(indices_np, indices_sk, feature_names)
+    compare_feature_sets(indices_np, indices_freg, feature_names)
 
     # --- Feature subsets ---
     X_train_np = X_train_scaled[:, indices_np]
     X_test_np = X_test_scaled[:, indices_np]
-    X_train_sk = X_train_scaled[:, indices_sk]
-    X_test_sk = X_test_scaled[:, indices_sk]
+    X_train_freg = X_train_scaled[:, indices_freg]
+    X_test_freg = X_test_scaled[:, indices_freg]
 
     # --- Train models ---
     print(f"\n{'=' * 50}")
@@ -60,17 +60,17 @@ def main(data=None):
     rf_np_model = train_random_forest(X_train_np, y_train)
 
     print(f"{'=' * 50}")
-    print("Training: Random Forest (SelectKBest features)")
+    print("Training: Random Forest (F-Regression features)")
     print("=" * 50)
-    rf_sk_model = train_random_forest(X_train_sk, y_train)
+    rf_freg_model = train_random_forest(X_train_freg, y_train)
 
     # --- Predictions ---
     y_pred_lr = lr_model.predict(X_test_scaled)
     y_pred_rf_np = rf_np_model.predict(X_test_np)
-    y_pred_rf_sk = rf_sk_model.predict(X_test_sk)
+    y_pred_rf_freg = rf_freg_model.predict(X_test_freg)
 
     # --- Weighted fusion (default weights: LR=0.2, RF_Pearson=0.4, RF_SKB=0.4) ---
-    y_pred_fused = fuse_predictions([y_pred_lr, y_pred_rf_np, y_pred_rf_sk])
+    y_pred_fused = fuse_predictions([y_pred_lr, y_pred_rf_np, y_pred_rf_freg])
 
     # --- Performance comparison ---
     results = {
@@ -78,8 +78,8 @@ def main(data=None):
             compute_mse(y_test, y_pred_lr), compute_mae(y_test, y_pred_lr)),
         "RF (NumPy Pearson features)": (
             compute_mse(y_test, y_pred_rf_np), compute_mae(y_test, y_pred_rf_np)),
-        "RF (SelectKBest features)": (
-            compute_mse(y_test, y_pred_rf_sk), compute_mae(y_test, y_pred_rf_sk)),
+        "RF (F-Regression features)": (
+            compute_mse(y_test, y_pred_rf_freg), compute_mae(y_test, y_pred_rf_freg)),
         "Weighted Fusion": (
             compute_mse(y_test, y_pred_fused), compute_mae(y_test, y_pred_fused)),
     }
@@ -96,7 +96,7 @@ def main(data=None):
     # --- Required chart: Feature Selection Method vs. Test Set MSE ---
     fs_mse_dict = {
         "NumPy Pearson": compute_mse(y_test, y_pred_rf_np),
-        "SelectKBest": compute_mse(y_test, y_pred_rf_sk),
+        "F-Regression": compute_mse(y_test, y_pred_rf_freg),
     }
     plot_mse_comparison(
         fs_mse_dict,

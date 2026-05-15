@@ -1,8 +1,7 @@
 import numpy as np
-from sklearn.feature_selection import SelectKBest, f_regression
 
 
-# ========== NumPy-only implementation ==========
+# ========== Method 1: Pearson Correlation (NumPy) ==========
 def pearson_correlation_numpy(X, y):
     n_features = X.shape[1]
     correlations = np.zeros(n_features)
@@ -27,31 +26,47 @@ def select_features_numpy(X, y, k=5):
     return selected_indices, scores
 
 
-def select_features_sklearn(X, y, k=5):
-    selector = SelectKBest(score_func=f_regression, k=k)
-    selector.fit(X, y)
-    selected_indices = selector.get_support(indices=True)
-    scores = selector.scores_[selected_indices]
+# ========== Method 2: F-Regression / F-Test (NumPy) ==========
+def f_regression_numpy(X, y):
+    """Compute F-statistic for each feature using only NumPy.
+
+    F = (r^2 / (1 - r^2)) * (n - 2)
+    where r is the Pearson correlation between feature and target.
+    """
+    r = pearson_correlation_numpy(X, y)
+    n = X.shape[0]
+    r_squared = r ** 2
+    with np.errstate(divide='ignore', invalid='ignore'):
+        f_scores = (r_squared / (1.0 - r_squared)) * (n - 2)
+        f_scores[np.isinf(f_scores)] = np.finfo(np.float64).max
+        f_scores[np.isnan(f_scores)] = 0.0
+    return f_scores
+
+
+def select_features_fregression(X, y, k=5):
+    f_scores = f_regression_numpy(X, y)
+    selected_indices = np.argsort(f_scores)[::-1][:k]
+    scores = f_scores[selected_indices]
     return selected_indices, scores
 
 
-def compare_feature_sets(indices_np, indices_sk, feature_names):
+def compare_feature_sets(indices_np, indices_freg, feature_names):
     set_np = set(indices_np)
-    set_sk = set(indices_sk)
-    intersection = set_np & set_sk
-    only_np = set_np - set_sk
-    only_sk = set_sk - set_np
+    set_freg = set(indices_freg)
+    intersection = set_np & set_freg
+    only_np = set_np - set_freg
+    only_freg = set_freg - set_np
 
     print("\n=== Feature Selection Comparison ===")
-    print(f"NumPy Pearson top-5: {[feature_names[i] for i in indices_np]}")
-    print(f"SelectKBest   top-5: {[feature_names[i] for i in indices_sk]}")
-    print(f"Intersection:        {[feature_names[i] for i in intersection]}")
-    print(f"Only in NumPy:       {[feature_names[i] for i in only_np]}")
-    print(f"Only in SelectKBest: {[feature_names[i] for i in only_sk]}")
+    print(f"NumPy Pearson  top-5: {[feature_names[i] for i in indices_np]}")
+    print(f"NumPy F-Test   top-5: {[feature_names[i] for i in indices_freg]}")
+    print(f"Intersection:         {[feature_names[i] for i in intersection]}")
+    print(f"Only in Pearson:      {[feature_names[i] for i in only_np]}")
+    print(f"Only in F-Test:       {[feature_names[i] for i in only_freg]}")
     print("=" * 50)
 
     return {
         "intersection": [feature_names[i] for i in intersection],
-        "only_numpy": [feature_names[i] for i in only_np],
-        "only_sklearn": [feature_names[i] for i in only_sk],
+        "only_pearson": [feature_names[i] for i in only_np],
+        "only_ftest": [feature_names[i] for i in only_freg],
     }
