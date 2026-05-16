@@ -91,4 +91,4 @@ def retrain_best_model_after_outlier_removal(X, y, best_model_name, outlier_mask
 
     mse = compute_mse(y_test, y_pred)
     mae = compute_mae(y_test, y_pred)
-    return mse, mae
+    return mse, mae, X_test, y_test, y_pred

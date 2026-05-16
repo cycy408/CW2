@@ -14,7 +14,7 @@ from data_prep import load_data, split_data, fill_missing_values, standardize_fe
 from feature_selection import select_features_numpy, select_features_fregression, compare_feature_sets
 from models import train_random_forest, print_feature_importance
 from evaluation import compute_mse, compute_mae, compute_r2
-from visualization import plot_mse_comparison, plot_geospatial_heatmap
+from visualization import plot_mse_comparison, plot_geospatial_heatmap, plot_outlier_removal_comparison
 from analysis import detect_outliers_iqr, analyze_outlier_features, retrain_best_model_after_outlier_removal
 import advanced
 
@@ -189,7 +189,7 @@ def main():
     # --- Geospatial heatmap (10x10 grid) ---
     lat_idx = feature_names.index('Latitude')
     lon_idx = feature_names.index('Longitude')
-    plot_geospatial_heatmap(
+    _, heatmap_vmax = plot_geospatial_heatmap(
         X_test, y_test, y_pred_rf_all,
         lat_idx, lon_idx,
         grid_size=10,
@@ -212,9 +212,10 @@ def main():
     print(f"\nBest model overall: {best_name} (MSE = {best_mse_before:.4f})")
     print(f"Retraining after removing outliers...")
 
-    mse_after, mae_after = retrain_best_model_after_outlier_removal(
-        X, y, best_name, outlier_mask, random_state=RANDOM_SEED
-    )
+    mse_after, mae_after, X_clean_test, y_clean_test, y_clean_pred = \
+        retrain_best_model_after_outlier_removal(
+            X, y, best_name, outlier_mask, random_state=RANDOM_SEED
+        )
 
     print(f"\n{'=' * 55}")
     print(f"Outlier Removal: Performance Comparison")
@@ -226,6 +227,20 @@ def main():
     mae_change = (best_mae_before - mae_after) / best_mae_before * 100
     print(f"  MSE change: {mse_change:+.2f}%")
     print(f"  MAE change: {mae_change:+.2f}%")
+
+    plot_outlier_removal_comparison(
+        best_mse_before, best_mae_before, mse_after, mae_after,
+        best_name, save_path="output/outlier_removal_comparison.png",
+    )
+
+    # --- Geospatial heatmap after outlier removal (same color scale) ---
+    plot_geospatial_heatmap(
+        X_clean_test, y_clean_test, y_clean_pred,
+        lat_idx, lon_idx,
+        grid_size=10,
+        save_path="output/geospatial_heatmap_after_outlier_removal.png",
+        vmin=0, vmax=heatmap_vmax,
+    )
 
     print("\n=== Pipeline Complete ===")
 

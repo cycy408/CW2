@@ -35,7 +35,8 @@ def plot_mse_comparison(mse_dict, save_path="output/mse_comparison.png",
 
 
 def plot_geospatial_heatmap(X_test, y_test, y_pred, lat_idx, lon_idx,
-                            grid_size=10, save_path="output/geospatial_heatmap.png"):
+                            grid_size=10, save_path="output/geospatial_heatmap.png",
+                            vmin=None, vmax=None):
     _ensure_dir(save_path)
 
     lats = X_test[:, lat_idx]
@@ -55,10 +56,16 @@ def plot_geospatial_heatmap(X_test, y_test, y_pred, lat_idx, lon_idx,
             if mask.sum() > 0:
                 grid[i, j] = errors[mask].mean()
 
+    if vmin is None:
+        vmin = np.nanmin(grid)
+    if vmax is None:
+        vmax = np.nanmax(grid)
+
     plt.figure(figsize=(10, 7))
     img = plt.imshow(
         grid, origin='lower', aspect='auto', cmap='RdYlGn_r',
-        extent=[lons.min(), lons.max(), lats.min(), lats.max()]
+        extent=[lons.min(), lons.max(), lats.min(), lats.max()],
+        vmin=vmin, vmax=vmax,
     )
     plt.colorbar(img, label='Mean Absolute Error')
     plt.xlabel('Longitude')
@@ -68,3 +75,40 @@ def plot_geospatial_heatmap(X_test, y_test, y_pred, lat_idx, lon_idx,
     plt.savefig(save_path, dpi=150)
     plt.close()
     print(f"[OK] Heatmap saved to {save_path}")
+    return vmin, vmax
+
+
+def plot_outlier_removal_comparison(mse_before, mae_before, mse_after, mae_after,
+                                     model_name, save_path="output/outlier_removal_comparison.png"):
+    _ensure_dir(save_path)
+
+    metrics = ["MSE", "MAE"]
+    before_vals = [mse_before, mae_before]
+    after_vals = [mse_after, mae_after]
+
+    x = np.arange(len(metrics))
+    width = 0.35
+
+    fig, ax = plt.subplots(figsize=(7, 5))
+    bars1 = ax.bar(x - width / 2, before_vals, width, label="Before Removal",
+                   color="#d62728", edgecolor="white")
+    bars2 = ax.bar(x + width / 2, after_vals, width, label="After Removal",
+                   color="#2ca02c", edgecolor="white")
+
+    ax.set_ylabel("Value", fontsize=12)
+    ax.set_title(f"Outlier Removal: Before vs After\n({model_name})", fontsize=13)
+    ax.set_xticks(x)
+    ax.set_xticklabels(metrics)
+    ax.legend()
+
+    for bar, val in zip(bars1, before_vals):
+        ax.text(bar.get_x() + bar.get_width() / 2, bar.get_height() * 1.01,
+                f"{val:.4f}", ha='center', va='bottom', fontsize=10)
+    for bar, val in zip(bars2, after_vals):
+        ax.text(bar.get_x() + bar.get_width() / 2, bar.get_height() * 1.01,
+                f"{val:.4f}", ha='center', va='bottom', fontsize=10)
+
+    plt.tight_layout()
+    plt.savefig(save_path, dpi=150)
+    plt.close()
+    print(f"[OK] Chart saved to {save_path}")
