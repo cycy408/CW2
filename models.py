@@ -2,8 +2,8 @@ import numpy as np
 from sklearn.ensemble import RandomForestRegressor
 
 
-def train_random_forest(X_train, y_train):
-    model = RandomForestRegressor(n_estimators=100)
+def train_random_forest(X_train, y_train, random_state=None):
+    model = RandomForestRegressor(n_estimators=100, random_state=random_state)
     model.fit(X_train, y_train)
     return model
 

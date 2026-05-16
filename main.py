@@ -2,6 +2,14 @@ import os
 import numpy as np
 from sklearn.linear_model import LinearRegression
 
+# ============================================================
+# RANDOM SEED CONFIGURATION
+#   Set to an integer (e.g. 42) → fixed seed, results reproducible
+#   Set to None                  → random seed, results vary each run
+#   Change the value below to toggle:
+# ============================================================
+RANDOM_SEED = 42
+
 from data_prep import load_data, split_data, fill_missing_values, standardize_features
 from feature_selection import select_features_numpy, select_features_fregression, compare_feature_sets
 from models import train_random_forest, print_feature_importance
@@ -20,7 +28,7 @@ def main():
 
     # --- 1. Data loading & preprocessing ---
     X, y, feature_names = load_data()
-    X_train, X_test, y_train, y_test = split_data(X, y)
+    X_train, X_test, y_train, y_test = split_data(X, y, random_state=RANDOM_SEED)
     X_train, X_test = fill_missing_values(X_train, X_test)
     X_train_scaled, X_test_scaled, _ = standardize_features(X_train, X_test)
 
@@ -68,7 +76,7 @@ def main():
     print(f"\n{'=' * 50}")
     print("Training: Random Forest (all features)")
     print("=" * 50)
-    rf_all_model = train_random_forest(X_train_scaled, y_train)
+    rf_all_model = train_random_forest(X_train_scaled, y_train, random_state=RANDOM_SEED)
     y_pred_rf_all = rf_all_model.predict(X_test_scaled)
     mse_rf_all = compute_mse(y_test, y_pred_rf_all)
     mae_rf_all = compute_mae(y_test, y_pred_rf_all)
@@ -76,7 +84,7 @@ def main():
     print(f"RF (all features) MSE:  {mse_rf_all:.4f}")
     print(f"RF (all features) MAE:  {mae_rf_all:.4f}")
     print(f"RF (all features) RMSE: {rmse_rf_all:.4f}")
-    print(f"RF (all features) R²:   {compute_r2(y_test, y_pred_rf_all):.4f}")
+    print(f"RF (all features) R2:   {compute_r2(y_test, y_pred_rf_all):.4f}")
     print_feature_importance(rf_all_model, feature_names)
 
     # --- 5. Random Forest (NumPy Pearson features) ---
@@ -90,7 +98,7 @@ def main():
     r2_rf_numpy = compute_r2(y_test, y_pred_rf_np)
     print(f"RF (NumPy Pearson) MSE: {mse_rf_numpy:.4f}")
     print(f"RF (NumPy Pearson) MAE: {mae_rf_numpy:.4f}")
-    print(f"RF (NumPy Pearson) R²:  {r2_rf_numpy:.4f}")
+    print(f"RF (NumPy Pearson) R2:  {r2_rf_numpy:.4f}")
     print_feature_importance(rf_np_model, [feature_names[i] for i in indices_numpy])
 
     # --- 6. Random Forest (F-Regression features) ---
@@ -104,7 +112,7 @@ def main():
     r2_rf_freg = compute_r2(y_test, y_pred_rf_freg)
     print(f"RF (F-Regression) MSE: {mse_rf_freg:.4f}")
     print(f"RF (F-Regression) MAE: {mae_rf_freg:.4f}")
-    print(f"RF (F-Regression) R²:  {r2_rf_freg:.4f}")
+    print(f"RF (F-Regression) R2:  {r2_rf_freg:.4f}")
     print_feature_importance(rf_freg_model, [feature_names[i] for i in indices_freg])
 
     # --- 7. Charts ---
@@ -130,7 +138,7 @@ def main():
     print("\n" + "=" * 85)
     print("Basic Layer: Model Performance Summary")
     print("=" * 85)
-    print(f"{'Model':<35} {'MSE':<12} {'RMSE':<12} {'R²':<12}")
+    print(f"{'Model':<35} {'MSE':<12} {'RMSE':<12} {'R2':<12}")
     print("-" * 75)
     print(f"{'Linear Regression (all)':<35} {mse_lr:<12.4f} {rmse_lr:<12.4f} {compute_r2(y_test, y_pred_lr):<12.4f}")
     print(f"{'Random Forest (all)':<35} {mse_rf_all:<12.4f} {rmse_rf_all:<12.4f} {compute_r2(y_test, y_pred_rf_all):<12.4f}")
@@ -148,10 +156,10 @@ def main():
         f.write("=" * 50 + "\n")
         f.write("Model Performance Comparison\n")
         f.write("=" * 50 + "\n")
-        f.write(f"Linear Regression (all)    MSE: {mse_lr:.6f}   RMSE: {rmse_lr:.6f}   R²: {compute_r2(y_test, y_pred_lr):.6f}\n")
-        f.write(f"Random Forest (all)        MSE: {mse_rf_all:.6f}   RMSE: {rmse_rf_all:.6f}   R²: {compute_r2(y_test, y_pred_rf_all):.6f}\n")
-        f.write(f"RF (NumPy Pearson 5)       MSE: {mse_rf_numpy:.6f}   R²: {r2_rf_numpy:.6f}\n")
-        f.write(f"RF (F-Regression 5)        MSE: {mse_rf_freg:.6f}   R²: {r2_rf_freg:.6f}\n")
+        f.write(f"Linear Regression (all)    MSE: {mse_lr:.6f}   RMSE: {rmse_lr:.6f}   R2: {compute_r2(y_test, y_pred_lr):.6f}\n")
+        f.write(f"Random Forest (all)        MSE: {mse_rf_all:.6f}   RMSE: {rmse_rf_all:.6f}   R2: {compute_r2(y_test, y_pred_rf_all):.6f}\n")
+        f.write(f"RF (NumPy Pearson 5)       MSE: {mse_rf_numpy:.6f}   R2: {r2_rf_numpy:.6f}\n")
+        f.write(f"RF (F-Regression 5)        MSE: {mse_rf_freg:.6f}   R2: {r2_rf_freg:.6f}\n")
         f.write("=" * 50 + "\n")
         f.write(f"\nLinear Regression Coefficients:\n")
         for name, coef in zip(feature_names, lr_model.coef_):
@@ -170,6 +178,7 @@ def main():
         'X_train_scaled': X_train_scaled,
         'X_test_scaled': X_test_scaled,
         'feature_names': feature_names,
+        'random_state': RANDOM_SEED,
     })
 
     # ==================== Extended Layer ====================
@@ -204,7 +213,7 @@ def main():
     print(f"Retraining after removing outliers...")
 
     mse_after, mae_after = retrain_best_model_after_outlier_removal(
-        X, y, best_name, outlier_mask
+        X, y, best_name, outlier_mask, random_state=RANDOM_SEED
     )
 
     print(f"\n{'=' * 55}")

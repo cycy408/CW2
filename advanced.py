@@ -1,6 +1,14 @@
 import numpy as np
 from sklearn.linear_model import LinearRegression
 
+# ============================================================
+# RANDOM SEED CONFIGURATION
+#   Set to an integer (e.g. 42) → fixed seed, results reproducible
+#   Set to None                  → random seed, results vary each run
+#   NOTE: When called from main.py, the seed is passed via data dict.
+# ============================================================
+RANDOM_SEED = 42
+
 from data_prep import load_data, split_data, standardize_features
 from feature_selection import select_features_numpy, select_features_fregression, compare_feature_sets
 from models import train_random_forest, fuse_predictions, print_feature_importance
@@ -11,7 +19,7 @@ from visualization import plot_mse_comparison
 def main(data=None):
     if data is None:
         X, y, feature_names = load_data()
-        X_train, X_test, y_train, y_test = split_data(X, y)
+        X_train, X_test, y_train, y_test = split_data(X, y, random_state=RANDOM_SEED)
         X_train_scaled, X_test_scaled, _ = standardize_features(X_train, X_test)
     else:
         X_train = data['X_train']
@@ -21,6 +29,7 @@ def main(data=None):
         X_train_scaled = data['X_train_scaled']
         X_test_scaled = data['X_test_scaled']
         feature_names = data['feature_names']
+        random_state = data.get('random_state', RANDOM_SEED)
 
     # --- Feature selection ---
     print("=" * 50)
@@ -57,14 +66,14 @@ def main(data=None):
     print(f"{'=' * 50}")
     print("Training: Random Forest (NumPy Pearson features)")
     print("=" * 50)
-    rf_np_model = train_random_forest(X_train_np, y_train)
+    rf_np_model = train_random_forest(X_train_np, y_train, random_state=random_state)
     print("Feature Importance (NumPy Pearson features):")
     print_feature_importance(rf_np_model, [feature_names[i] for i in indices_np])
 
     print(f"\n{'=' * 50}")
     print("Training: Random Forest (F-Regression features)")
     print("=" * 50)
-    rf_freg_model = train_random_forest(X_train_freg, y_train)
+    rf_freg_model = train_random_forest(X_train_freg, y_train, random_state=random_state)
     print("Feature Importance (F-Regression features):")
     print_feature_importance(rf_freg_model, [feature_names[i] for i in indices_freg])
 
@@ -95,7 +104,7 @@ def main(data=None):
     print("\n" + "=" * 80)
     print("Advanced Layer: Model Performance Comparison")
     print("=" * 80)
-    print(f"{'Model':<40} {'MSE':>10} {'MAE':>10} {'R²':>10}")
+    print(f"{'Model':<40} {'MSE':>10} {'MAE':>10} {'R2':>10}")
     print("-" * 72)
     for name, (mse, mae, r2) in results.items():
         print(f"{name:<40} {mse:>10.4f} {mae:>10.4f} {r2:>10.4f}")

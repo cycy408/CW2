@@ -35,7 +35,7 @@ def analyze_outlier_features(X, y, outlier_mask, feature_names):
 
 
 def retrain_best_model_after_outlier_removal(X, y, best_model_name, outlier_mask,
-                                             test_size=0.2):
+                                             test_size=0.2, random_state=None):
     X_clean = X[~outlier_mask]
     y_clean = y[~outlier_mask]
 
@@ -43,7 +43,7 @@ def retrain_best_model_after_outlier_removal(X, y, best_model_name, outlier_mask
           f"(removed {np.sum(outlier_mask)})")
 
     X_train, X_test, y_train, y_test = train_test_split(
-        X_clean, y_clean, test_size=test_size
+        X_clean, y_clean, test_size=test_size, random_state=random_state
     )
     scaler = StandardScaler()
     X_train_s = scaler.fit_transform(X_train)
@@ -57,30 +57,30 @@ def retrain_best_model_after_outlier_removal(X, y, best_model_name, outlier_mask
         lr.fit(X_train_s, y_train)
         pred_lr = lr.predict(X_test_s)
 
-        rf_np = train_random_forest(X_train_s[:, indices_np], y_train)
+        rf_np = train_random_forest(X_train_s[:, indices_np], y_train, random_state=random_state)
         pred_rf_np = rf_np.predict(X_test_s[:, indices_np])
 
-        rf_freg = train_random_forest(X_train_s[:, indices_freg], y_train)
+        rf_freg = train_random_forest(X_train_s[:, indices_freg], y_train, random_state=random_state)
         pred_rf_freg = rf_freg.predict(X_test_s[:, indices_freg])
 
         y_pred = fuse_predictions([pred_lr, pred_rf_np, pred_rf_freg])
 
     elif "NumPy Pearson" in best_model_name:
         indices_np, _ = select_features_numpy(X_train, y_train, k=5)
-        model = train_random_forest(X_train_s[:, indices_np], y_train)
+        model = train_random_forest(X_train_s[:, indices_np], y_train, random_state=random_state)
         y_pred = model.predict(X_test_s[:, indices_np])
 
     elif "F-Regression" in best_model_name:
         indices_freg, _ = select_features_fregression(X_train, y_train, k=5)
-        model = train_random_forest(X_train_s[:, indices_freg], y_train)
+        model = train_random_forest(X_train_s[:, indices_freg], y_train, random_state=random_state)
         y_pred = model.predict(X_test_s[:, indices_freg])
 
     elif "all" in best_model_name.lower():
-        model = train_random_forest(X_train_s, y_train)
+        model = train_random_forest(X_train_s, y_train, random_state=random_state)
         y_pred = model.predict(X_test_s)
 
     else:
-        model = train_random_forest(X_train_s, y_train)
+        model = train_random_forest(X_train_s, y_train, random_state=random_state)
         y_pred = model.predict(X_test_s)
 
     mse = compute_mse(y_test, y_pred)
