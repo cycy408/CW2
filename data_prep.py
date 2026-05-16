@@ -21,13 +21,13 @@ def load_data():
     return X, y, feature_names
 
 
-def split_data(X, y, test_size=0.2, random_state=42):
+def split_data(X, y, test_size=0.2):
     print("=" * 50)
     print("Step 2: Train/Test Split")
     print("=" * 50)
 
     X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=test_size, random_state=random_state
+        X, y, test_size=test_size
     )
 
     print(f"  Training set: {X_train.shape[0]}")

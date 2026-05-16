@@ -2,8 +2,8 @@ import numpy as np
 from sklearn.ensemble import RandomForestRegressor
 
 
-def train_random_forest(X_train, y_train, random_state=42):
-    model = RandomForestRegressor(n_estimators=100, random_state=random_state)
+def train_random_forest(X_train, y_train):
+    model = RandomForestRegressor(n_estimators=100)
     model.fit(X_train, y_train)
     return model
 
@@ -18,7 +18,7 @@ def print_feature_importance(model, feature_names):
         print(f"  {feature_names[i]:<15}  {importances[i]:.4f}  {bar}")
 
 
-# ========== NumPy-only implementation ==========
+# ========== implementation ==========
 def fuse_predictions(pred_list, weights=None):
     if weights is None:
         weights = [0.2, 0.4, 0.4]
