@@ -1,18 +1,20 @@
 ==================================================
 Model Performance Comparison
 ==================================================
-Linear Regression (all)    MSE: 0.555892   RMSE: 0.745581   R2: 0.575788
-Random Forest (all)        MSE: 0.255170   RMSE: 0.505143   R2: 0.805275
-RF (NumPy Pearson 5)       MSE: 0.452115   R2: 0.654982
-RF (F-Regression 5)        MSE: 0.449488   R2: 0.656987
+Linear Regression (all)    MSE: 0.456094   RMSE: 0.675347   R2: 0.651945
+Random Forest (all)        MSE: 0.253079   RMSE: 0.503070   R2: 0.806870
+RF (NumPy Pearson 5)       MSE: 0.399511   R2: 0.695125
+RF (F-Regression 5)        MSE: 0.400260   R2: 0.694553
 ==================================================
 
 Linear Regression Coefficients:
-  MedInc         : 0.854383
-  HouseAge       : 0.122546
-  AveRooms       : -0.294410
-  AveBedrms      : 0.339259
-  Population     : -0.002308
-  AveOccup       : -0.040829
-  Latitude       : -0.896929
-  Longitude      : -0.869842
+  MedInc         : 0.790121
+  HouseAge       : 0.128423
+  AveRooms       : -0.146901
+  AveBedrms      : -0.225452
+  Population     : 0.032272
+  AveOccup       : -0.017839
+  Latitude       : -0.886316
+  Longitude      : -0.834471
+  RoomsPerHousehold: 0.519541
+  BedroomsPerRoom: 0.241441

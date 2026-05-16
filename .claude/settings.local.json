@@ -4,7 +4,9 @@
       "Bash(tar -tzf housing.tgz)",
       "Bash(tar -xzf housing.tgz -O)",
       "Bash(python main.py)",
-      "mcp__ide__getDiagnostics"
+      "mcp__ide__getDiagnostics",
+      "Bash(python -c \"import pandas; print\\('pandas', pandas.__version__\\)\")",
+      "Bash(python -c \"from data_prep import load_data; X, y, names = load_data\\(\\); print\\('OK - X shape:', X.shape, 'y shape:', y.shape, 'type:', type\\(X\\)\\)\")"
     ]
   }
 }

@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 from sklearn.datasets import fetch_california_housing
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
@@ -6,19 +7,34 @@ from sklearn.preprocessing import StandardScaler
 
 def load_data():
     print("=" * 50)
-    print("Step 1: Load California Housing Dataset")
+    print("Step 1: Load California Housing Dataset (pandas + numpy)")
     print("=" * 50)
 
     housing = fetch_california_housing()
-    X = housing.data
-    y = housing.target
     feature_names = list(housing.feature_names)
 
-    print(f"  Samples: {X.shape[0]}, Features: {X.shape[1]}")
-    print(f"  Feature names: {feature_names}")
+    df = pd.DataFrame(housing.data, columns=feature_names)
+    df['target'] = housing.target
+
+    df['RoomsPerHousehold'] = df['AveRooms'] / df['AveOccup']
+    df['BedroomsPerRoom'] = df['AveBedrms'] / df['AveRooms']
+    df['BedroomsPerRoom'] = df['BedroomsPerRoom'].replace([np.inf, -np.inf], 0).fillna(0)
+
+    engineered_names = ['RoomsPerHousehold', 'BedroomsPerRoom']
+    all_feature_names = feature_names + engineered_names
+
+    print(f"  Dataset loaded as DataFrame: {df.shape[0]} rows x {df.shape[1]} cols")
+    print(f"  Original features: {feature_names}")
+    print(f"  Engineered features: {engineered_names}")
     print(f"  Target: median house value (unit: $100k)")
+    print(f"  Data types:\n{df.dtypes}\n")
+
+    X = df[all_feature_names].to_numpy()
+    y = df['target'].to_numpy()
+
+    print(f"  Converted to numpy — X: {X.shape}, y: {y.shape}")
     print()
-    return X, y, feature_names
+    return X, y, all_feature_names
 
 
 def split_data(X, y, test_size=0.2, random_state=None):

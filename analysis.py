@@ -57,13 +57,19 @@ def retrain_best_model_after_outlier_removal(X, y, best_model_name, outlier_mask
         lr.fit(X_train_s, y_train)
         pred_lr = lr.predict(X_test_s)
 
+        rf_all = train_random_forest(X_train_s, y_train, random_state=random_state)
+        pred_rf_all = rf_all.predict(X_test_s)
+
         rf_np = train_random_forest(X_train_s[:, indices_np], y_train, random_state=random_state)
         pred_rf_np = rf_np.predict(X_test_s[:, indices_np])
 
         rf_freg = train_random_forest(X_train_s[:, indices_freg], y_train, random_state=random_state)
         pred_rf_freg = rf_freg.predict(X_test_s[:, indices_freg])
 
-        y_pred = fuse_predictions([pred_lr, pred_rf_np, pred_rf_freg])
+        y_pred = fuse_predictions(
+            [pred_lr, pred_rf_all, pred_rf_np, pred_rf_freg],
+            weights=[0.15, 0.35, 0.25, 0.25],
+        )
 
     elif "NumPy Pearson" in best_model_name:
         indices_np, _ = select_features_numpy(X_train, y_train, k=5)

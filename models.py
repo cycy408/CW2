@@ -3,7 +3,14 @@ from sklearn.ensemble import RandomForestRegressor
 
 
 def train_random_forest(X_train, y_train, random_state=None):
-    model = RandomForestRegressor(n_estimators=100, random_state=random_state)
+    model = RandomForestRegressor(
+        n_estimators=300,
+        max_depth=20,
+        min_samples_split=2,
+        min_samples_leaf=1,
+        random_state=random_state,
+        n_jobs=-1,
+    )
     model.fit(X_train, y_train)
     return model
 

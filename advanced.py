@@ -64,6 +64,13 @@ def main(data=None):
     lr_model.fit(X_train_scaled, y_train)
 
     print(f"{'=' * 50}")
+    print("Training: Random Forest (all features)")
+    print("=" * 50)
+    rf_all_model = train_random_forest(X_train_scaled, y_train, random_state=random_state)
+    print("Feature Importance (all features):")
+    print_feature_importance(rf_all_model, feature_names)
+
+    print(f"\n{'=' * 50}")
     print("Training: Random Forest (NumPy Pearson features)")
     print("=" * 50)
     rf_np_model = train_random_forest(X_train_np, y_train, random_state=random_state)
@@ -79,17 +86,24 @@ def main(data=None):
 
     # --- Predictions ---
     y_pred_lr = lr_model.predict(X_test_scaled)
+    y_pred_rf_all = rf_all_model.predict(X_test_scaled)
     y_pred_rf_np = rf_np_model.predict(X_test_np)
     y_pred_rf_freg = rf_freg_model.predict(X_test_freg)
 
-    # --- Weighted fusion (default weights: LR=0.2, RF_Pearson=0.4, RF_SKB=0.4) ---
-    y_pred_fused = fuse_predictions([y_pred_lr, y_pred_rf_np, y_pred_rf_freg])
+    # --- Weighted fusion (LR=0.15, RF_all=0.35, RF_Pearson=0.25, RF_Freg=0.25) ---
+    y_pred_fused = fuse_predictions(
+        [y_pred_lr, y_pred_rf_all, y_pred_rf_np, y_pred_rf_freg],
+        weights=[0.15, 0.35, 0.25, 0.25],
+    )
 
     # --- Performance comparison ---
     results = {
         "Linear Regression (all features)": (
             compute_mse(y_test, y_pred_lr), compute_mae(y_test, y_pred_lr),
             compute_r2(y_test, y_pred_lr)),
+        "RF (all features)": (
+            compute_mse(y_test, y_pred_rf_all), compute_mae(y_test, y_pred_rf_all),
+            compute_r2(y_test, y_pred_rf_all)),
         "RF (NumPy Pearson features)": (
             compute_mse(y_test, y_pred_rf_np), compute_mae(y_test, y_pred_rf_np),
             compute_r2(y_test, y_pred_rf_np)),
