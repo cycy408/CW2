@@ -3,17 +3,20 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import LinearRegression
 
-from models import train_random_forest, fuse_predictions
-from feature_selection import select_features_numpy, select_features_fregression
+from models import train_random_forest
+from model_fusion import fuse_predictions
+from feature_selection import select_features_numpy, select_features_sklearn_freg
 from evaluation import compute_mse, compute_mae
 
 
+# ========== NumPy-only implementation ==========
 def detect_outliers_iqr(y, factor=1.5):
     q1, q3 = np.percentile(y, [25, 75])
     iqr = q3 - q1
     return (y < q1 - factor * iqr) | (y > q3 + factor * iqr)
 
 
+# ========== NumPy-only implementation ==========
 def analyze_outlier_features(X, y, outlier_mask, feature_names):
     outliers_X = X[outlier_mask]
     normal_X = X[~outlier_mask]
@@ -34,6 +37,7 @@ def analyze_outlier_features(X, y, outlier_mask, feature_names):
     return outliers_X, normal_X
 
 
+# ========== sklearn (StandardScaler + models) + NumPy fusion ==========
 def retrain_best_model_after_outlier_removal(X, y, best_model_name, outlier_mask,
                                              test_size=0.2, random_state=None):
     X_clean = X[~outlier_mask]
@@ -51,7 +55,7 @@ def retrain_best_model_after_outlier_removal(X, y, best_model_name, outlier_mask
 
     if "Weighted Fusion" in best_model_name:
         indices_np, _ = select_features_numpy(X_train, y_train, k=5)
-        indices_freg, _ = select_features_fregression(X_train, y_train, k=5)
+        indices_skfreg, _ = select_features_sklearn_freg(X_train, y_train, k=5)
 
         lr = LinearRegression()
         lr.fit(X_train_s, y_train)
@@ -63,23 +67,23 @@ def retrain_best_model_after_outlier_removal(X, y, best_model_name, outlier_mask
         rf_np = train_random_forest(X_train_s[:, indices_np], y_train, random_state=random_state)
         pred_rf_np = rf_np.predict(X_test_s[:, indices_np])
 
-        rf_freg = train_random_forest(X_train_s[:, indices_freg], y_train, random_state=random_state)
-        pred_rf_freg = rf_freg.predict(X_test_s[:, indices_freg])
+        rf_skfreg = train_random_forest(X_train_s[:, indices_skfreg], y_train, random_state=random_state)
+        pred_rf_skfreg = rf_skfreg.predict(X_test_s[:, indices_skfreg])
 
         y_pred = fuse_predictions(
-            [pred_lr, pred_rf_all, pred_rf_np, pred_rf_freg],
-            weights=[0.15, 0.35, 0.25, 0.25],
+            [pred_lr, pred_rf_all, pred_rf_np, pred_rf_skfreg],
+            weights=[0.10, 0.35, 0.275, 0.275],
         )
+
+    elif "sklearn" in best_model_name.lower():
+        indices_skfreg, _ = select_features_sklearn_freg(X_train, y_train, k=5)
+        model = train_random_forest(X_train_s[:, indices_skfreg], y_train, random_state=random_state)
+        y_pred = model.predict(X_test_s[:, indices_skfreg])
 
     elif "NumPy Pearson" in best_model_name:
         indices_np, _ = select_features_numpy(X_train, y_train, k=5)
         model = train_random_forest(X_train_s[:, indices_np], y_train, random_state=random_state)
         y_pred = model.predict(X_test_s[:, indices_np])
-
-    elif "F-Regression" in best_model_name:
-        indices_freg, _ = select_features_fregression(X_train, y_train, k=5)
-        model = train_random_forest(X_train_s[:, indices_freg], y_train, random_state=random_state)
-        y_pred = model.predict(X_test_s[:, indices_freg])
 
     elif "all" in best_model_name.lower():
         model = train_random_forest(X_train_s, y_train, random_state=random_state)

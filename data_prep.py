@@ -5,6 +5,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 
 
+# ========== sklearn (fetch_california_housing) + pandas/numpy ==========
 def load_data():
     print("=" * 50)
     print("Step 1: Load California Housing Dataset (pandas + numpy)")
@@ -37,6 +38,7 @@ def load_data():
     return X, y, all_feature_names
 
 
+# ========== sklearn (train_test_split) ==========
 def split_data(X, y, test_size=0.2, random_state=None):
     print("=" * 50)
     print("Step 2: Train/Test Split")
@@ -52,6 +54,7 @@ def split_data(X, y, test_size=0.2, random_state=None):
     return X_train, X_test, y_train, y_test
 
 
+# ========== NumPy-only implementation ==========
 def fill_missing_values(X_train, X_test):
     print("=" * 50)
     print("Step 3: Fill Missing Values with Median")
@@ -70,6 +73,7 @@ def fill_missing_values(X_train, X_test):
     return train_filled, test_filled
 
 
+# ========== sklearn (StandardScaler) ==========
 def standardize_features(X_train, X_test):
     print("=" * 50)
     print("Step 4: Standardize Features")

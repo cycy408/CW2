@@ -1,4 +1,5 @@
 import numpy as np
+from sklearn.feature_selection import SelectKBest, f_regression
 
 
 # ========== Method 1: Pearson Correlation (NumPy) ==========
@@ -26,27 +27,12 @@ def select_features_numpy(X, y, k=5):
     return selected_indices, scores
 
 
-# ========== Method 2: F-Regression / F-Test (NumPy) ==========
-def f_regression_numpy(X, y):
-    """Compute F-statistic for each feature using only NumPy.
-
-    F = (r^2 / (1 - r^2)) * (n - 2)
-    where r is the Pearson correlation between feature and target.
-    """
-    r = pearson_correlation_numpy(X, y)
-    n = X.shape[0]
-    r_squared = r ** 2
-    with np.errstate(divide='ignore', invalid='ignore'):
-        f_scores = (r_squared / (1.0 - r_squared)) * (n - 2)
-        f_scores[np.isinf(f_scores)] = np.finfo(np.float64).max
-        f_scores[np.isnan(f_scores)] = 0.0
-    return f_scores
-
-
-def select_features_fregression(X, y, k=5):
-    f_scores = f_regression_numpy(X, y)
-    selected_indices = np.argsort(f_scores)[::-1][:k]
-    scores = f_scores[selected_indices]
+# ========== Method 2: sklearn SelectKBest + F-Regression ==========
+def select_features_sklearn_freg(X, y, k=5):
+    selector = SelectKBest(score_func=f_regression, k=k)
+    selector.fit(X, y)
+    selected_indices = np.argsort(selector.scores_)[::-1][:k]
+    scores = selector.scores_[selected_indices]
     return selected_indices, scores
 
 
@@ -59,10 +45,10 @@ def compare_feature_sets(indices_np, indices_freg, feature_names):
 
     print("\n=== Feature Selection Comparison ===")
     print(f"NumPy Pearson  top-5: {[feature_names[i] for i in indices_np]}")
-    print(f"NumPy F-Test   top-5: {[feature_names[i] for i in indices_freg]}")
+    print(f"sklearn F-Reg  top-5: {[feature_names[i] for i in indices_freg]}")
     print(f"Intersection:         {[feature_names[i] for i in intersection]}")
     print(f"Only in Pearson:      {[feature_names[i] for i in only_np]}")
-    print(f"Only in F-Test:       {[feature_names[i] for i in only_freg]}")
+    print(f"Only in F-Reg:        {[feature_names[i] for i in only_freg]}")
     print("=" * 50)
 
     return {

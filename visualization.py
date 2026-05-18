@@ -9,6 +9,7 @@ def _ensure_dir(path):
         os.makedirs(d, exist_ok=True)
 
 
+# ========== matplotlib (no sklearn) ==========
 def plot_mse_comparison(mse_dict, save_path="output/mse_comparison.png",
                         title="Feature Selection Method vs. Test Set MSE"):
     _ensure_dir(save_path)
@@ -34,6 +35,7 @@ def plot_mse_comparison(mse_dict, save_path="output/mse_comparison.png",
     print(f"[OK] Chart saved to {save_path}")
 
 
+# ========== NumPy-only implementation (grid calculation) + matplotlib ==========
 def plot_geospatial_heatmap(X_test, y_test, y_pred, lat_idx, lon_idx,
                             grid_size=10, save_path="output/geospatial_heatmap.png",
                             vmin=None, vmax=None):
@@ -78,6 +80,7 @@ def plot_geospatial_heatmap(X_test, y_test, y_pred, lat_idx, lon_idx,
     return vmin, vmax
 
 
+# ========== matplotlib (no sklearn) ==========
 def plot_outlier_removal_comparison(mse_before, mae_before, mse_after, mae_after,
                                      model_name, save_path="output/outlier_removal_comparison.png"):
     _ensure_dir(save_path)

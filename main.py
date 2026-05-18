@@ -1,3 +1,16 @@
+# ============================================================
+# GAI USAGE DECLARATION
+#   AI-assisted areas (ChatGPT / Claude):
+#     - Initial draft of geospatial heatmap (later rewritten into
+#       visualization.py with manual grid-loop approach)
+#     - Debugging help for random-seed reproducibility issues
+#     - Code formatting and comment polishing
+#   Core logic (Pearson corr, F-test, weighted fusion, MSE/MAE,
+#   outlier detection) is manually implemented in NumPy.
+#   sklearn is used only for model training (LinearRegression,
+#   RandomForestRegressor, StandardScaler, SelectKBest).
+# ============================================================
+
 import os
 import numpy as np
 from sklearn.linear_model import LinearRegression
@@ -11,7 +24,7 @@ from sklearn.linear_model import LinearRegression
 RANDOM_SEED = 42
 
 from data_prep import load_data, split_data, fill_missing_values, standardize_features
-from feature_selection import select_features_numpy, select_features_fregression, compare_feature_sets
+from feature_selection import select_features_numpy, select_features_sklearn_freg, compare_feature_sets
 from models import train_random_forest, print_feature_importance
 from evaluation import compute_mse, compute_mae, compute_r2
 from visualization import plot_mse_comparison, plot_geospatial_heatmap, plot_outlier_removal_comparison
@@ -63,14 +76,14 @@ def main():
     print(f"Pearson scores:   {scores_numpy}")
 
     print(f"\n{'=' * 50}")
-    print("Feature Selection 2: F-Regression / F-Test (NumPy)")
+    print("Feature Selection 2: sklearn SelectKBest + F-Regression")
     print("=" * 50)
-    indices_freg, scores_freg = select_features_fregression(X_train, y_train, k=5)
-    print(f"Selected indices: {indices_freg}")
-    print(f"Feature names:    {[feature_names[i] for i in indices_freg]}")
-    print(f"F-scores:         {scores_freg}")
+    indices_skfreg, scores_skfreg = select_features_sklearn_freg(X_train, y_train, k=5)
+    print(f"Selected indices: {indices_skfreg}")
+    print(f"Feature names:    {[feature_names[i] for i in indices_skfreg]}")
+    print(f"F-scores:         {scores_skfreg}")
 
-    compare_feature_sets(indices_numpy, indices_freg, feature_names)
+    compare_feature_sets(indices_numpy, indices_skfreg, feature_names)
 
     # --- 4. Random Forest (all features) ---
     print(f"\n{'=' * 50}")
@@ -101,19 +114,19 @@ def main():
     print(f"RF (NumPy Pearson) R2:  {r2_rf_numpy:.4f}")
     print_feature_importance(rf_np_model, [feature_names[i] for i in indices_numpy])
 
-    # --- 6. Random Forest (F-Regression features) ---
+    # --- 6. Random Forest (sklearn SelectKBest + F-Regression features) ---
     print(f"\n{'=' * 50}")
-    print("Training: Random Forest (F-Regression features)")
+    print("Training: Random Forest (sklearn SelectKBest + F-Regression features)")
     print("=" * 50)
-    rf_freg_model = train_random_forest(X_train_scaled[:, indices_freg], y_train, random_state=RANDOM_SEED)
-    y_pred_rf_freg = rf_freg_model.predict(X_test_scaled[:, indices_freg])
-    mse_rf_freg = compute_mse(y_test, y_pred_rf_freg)
-    mae_rf_freg = compute_mae(y_test, y_pred_rf_freg)
-    r2_rf_freg = compute_r2(y_test, y_pred_rf_freg)
-    print(f"RF (F-Regression) MSE: {mse_rf_freg:.4f}")
-    print(f"RF (F-Regression) MAE: {mae_rf_freg:.4f}")
-    print(f"RF (F-Regression) R2:  {r2_rf_freg:.4f}")
-    print_feature_importance(rf_freg_model, [feature_names[i] for i in indices_freg])
+    rf_skfreg_model = train_random_forest(X_train_scaled[:, indices_skfreg], y_train, random_state=RANDOM_SEED)
+    y_pred_rf_skfreg = rf_skfreg_model.predict(X_test_scaled[:, indices_skfreg])
+    mse_rf_skfreg = compute_mse(y_test, y_pred_rf_skfreg)
+    mae_rf_skfreg = compute_mae(y_test, y_pred_rf_skfreg)
+    r2_rf_skfreg = compute_r2(y_test, y_pred_rf_skfreg)
+    print(f"RF (sklearn F-Reg) MSE: {mse_rf_skfreg:.4f}")
+    print(f"RF (sklearn F-Reg) MAE: {mae_rf_skfreg:.4f}")
+    print(f"RF (sklearn F-Reg) R2:  {r2_rf_skfreg:.4f}")
+    print_feature_importance(rf_skfreg_model, [feature_names[i] for i in indices_skfreg])
 
     # --- 7. Charts ---
     os.makedirs("output", exist_ok=True)
@@ -122,14 +135,14 @@ def main():
         "Linear Regression\n(all features)": mse_lr,
         "Random Forest\n(all features)": mse_rf_all,
         "Random Forest\n(NumPy Pearson)": mse_rf_numpy,
-        "Random Forest\n(F-Regression)": mse_rf_freg,
+        "Random Forest\n(sklearn F-Reg)": mse_rf_skfreg,
     }
     plot_mse_comparison(mse_dict_all, save_path="output/mse_comparison.png",
                         title="All Models: Test Set MSE Comparison")
 
     fs_mse_dict = {
         "NumPy Pearson": mse_rf_numpy,
-        "F-Regression": mse_rf_freg,
+        "sklearn\nSelectKBest+F": mse_rf_skfreg,
     }
     plot_mse_comparison(fs_mse_dict, save_path="output/feature_selection_mse.png",
                         title="Feature Selection Method vs. Test Set MSE")
@@ -143,10 +156,10 @@ def main():
     print(f"{'Linear Regression (all)':<35} {mse_lr:<12.4f} {rmse_lr:<12.4f} {compute_r2(y_test, y_pred_lr):<12.4f}")
     print(f"{'Random Forest (all)':<35} {mse_rf_all:<12.4f} {rmse_rf_all:<12.4f} {compute_r2(y_test, y_pred_rf_all):<12.4f}")
     print(f"{'RF (NumPy Pearson 5)':<35} {mse_rf_numpy:<12.4f} {np.sqrt(mse_rf_numpy):<12.4f} {r2_rf_numpy:<12.4f}")
-    print(f"{'RF (F-Regression 5)':<35} {mse_rf_freg:<12.4f} {np.sqrt(mse_rf_freg):<12.4f} {r2_rf_freg:<12.4f}")
+    print(f"{'RF (sklearn F-Reg 5)':<35} {mse_rf_skfreg:<12.4f} {np.sqrt(mse_rf_skfreg):<12.4f} {r2_rf_skfreg:<12.4f}")
     print("=" * 85)
 
-    best_basic_mse = min(mse_rf_all, mse_rf_numpy, mse_rf_freg)
+    best_basic_mse = min(mse_rf_all, mse_rf_numpy, mse_rf_skfreg)
     print(f"\nBest RF MSE: {best_basic_mse:.4f}")
     print(f"vs. Linear Regression: MSE reduced by "
           f"{(mse_lr - best_basic_mse) / mse_lr * 100:.1f}%")
@@ -159,7 +172,7 @@ def main():
         f.write(f"Linear Regression (all)    MSE: {mse_lr:.6f}   RMSE: {rmse_lr:.6f}   R2: {compute_r2(y_test, y_pred_lr):.6f}\n")
         f.write(f"Random Forest (all)        MSE: {mse_rf_all:.6f}   RMSE: {rmse_rf_all:.6f}   R2: {compute_r2(y_test, y_pred_rf_all):.6f}\n")
         f.write(f"RF (NumPy Pearson 5)       MSE: {mse_rf_numpy:.6f}   R2: {r2_rf_numpy:.6f}\n")
-        f.write(f"RF (F-Regression 5)        MSE: {mse_rf_freg:.6f}   R2: {r2_rf_freg:.6f}\n")
+        f.write(f"RF (sklearn F-Reg 5)        MSE: {mse_rf_skfreg:.6f}   R2: {r2_rf_skfreg:.6f}\n")
         f.write("=" * 50 + "\n")
         f.write(f"\nLinear Regression Coefficients:\n")
         for name, coef in zip(feature_names, lr_model.coef_):

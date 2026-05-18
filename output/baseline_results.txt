@@ -4,7 +4,7 @@ Model Performance Comparison
 Linear Regression (all)    MSE: 0.456094   RMSE: 0.675347   R2: 0.651945
 Random Forest (all)        MSE: 0.253079   RMSE: 0.503070   R2: 0.806870
 RF (NumPy Pearson 5)       MSE: 0.400396   R2: 0.694450
-RF (F-Regression 5)        MSE: 0.400396   R2: 0.694450
+RF (sklearn F-Reg 5)        MSE: 0.400396   R2: 0.694450
 ==================================================
 
 Linear Regression Coefficients:
