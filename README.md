@@ -8,16 +8,16 @@
 CW2/
 ├── main.py                 # 主流程入口（含 GAI 使用声明）
 ├── data_prep.py            # 数据加载（pandas）与预处理 [sklearn + NumPy]
-├── feature_selection.py    # 三种特征选择方法（NumPy 手动 + sklearn）
+├── feature_selection.py    # 两种特征选择方法（NumPy 手动 + sklearn）
 ├── models.py               # 随机森林训练 [sklearn]
 ├── model_fusion.py         # 加权平均融合 [纯 NumPy]
 ├── evaluation.py           # MSE、MAE、R² 评估指标 [纯 NumPy]
 ├── analysis.py             # 异常值检测（IQR）与分析 [NumPy + sklearn]
 ├── visualization.py        # 柱状图与地理热力图 [matplotlib + NumPy]
-├── advanced.py             # 进阶层：多模型训练与加权融合
+├── advanced.py             # 进阶层：四模型训练与加权融合
 ├── output/
 │   ├── mse_comparison.png                          # 所有模型 MSE 对比柱状图
-│   ├── feature_selection_mse.png                   # 特征选择方法 MSE 对比（3 种方法）
+│   ├── feature_selection_mse.png                   # 特征选择方法 MSE 对比（2 种方法）
 │   ├── advanced_mse_comparison.png                 # 进阶层融合模型对比
 │   ├── geospatial_heatmap.png                      # 10×10 地理预测误差热力图（去异常值前）
 │   ├── geospatial_heatmap_after_outlier_removal.png # 10×10 热力图（去异常值后）
@@ -50,18 +50,16 @@ CW2/
 
 **特征选择**（feature_selection.py）：
 - **方法 A — Pearson 相关系数 [NumPy]**：手动逐特征计算与目标值的 Pearson r，取 |r| 最大的 5 个
-- **方法 B — F 检验 [NumPy]**：由 r² 推导 F 统计量，公式 `F = (r² / (1 − r²)) × (n − 2)`，取 F 值最大的 5 个
-- **方法 C — sklearn SelectKBest + F-Regression [sklearn]**：调用 `SelectKBest(score_func=f_regression, k=5)`，与 NumPy 手动 F-test 对照
-- 输出三种方法选出的特征交集与差异
+- **方法 B — sklearn SelectKBest + F-Regression [sklearn]**：调用 `SelectKBest(score_func=f_regression, k=5)` 取 F 值最大的 5 个
+- 输出两种方法选出的特征交集与差异
 
 **基线模型 — 随机森林**：
 - 超参数：`n_estimators=300`, `max_depth=20`, `n_jobs=-1`
-- 分别用以下四组特征训练：
+- 分别用以下三组特征训练：
   - 全部 10 个特征
   - NumPy Pearson 选出的 5 个特征
-  - NumPy F 检验选出的 5 个特征
   - sklearn SelectKBest + F-Regression 选出的 5 个特征
-- 将 4 组 RF 结果与线性回归基线对比 MSE
+- 将 3 组 RF 结果与线性回归基线对比 MSE
 - 输出：`output/mse_comparison.png`、`output/feature_selection_mse.png`、`output/baseline_results.txt`
 
 ---
@@ -70,15 +68,14 @@ CW2/
 
 **advanced.py**（由 `main()` 调用，也可独立运行）
 
-- 重新执行三种特征选择，训练五个模型：
+- 重新执行两种特征选择，训练四个模型：
   - 线性回归（全特征）
   - 随机森林（全特征）
   - 随机森林（NumPy Pearson 选出的 5 个特征）
-  - 随机森林（NumPy F 检验选出的 5 个特征）
   - 随机森林（sklearn SelectKBest + F-Regression 选出的 5 个特征）
-- **加权融合**（model_fusion.py 的 `fuse_predictions` [纯 NumPy]）：对五个模型的预测值取加权平均
-  - 权重 `[0.10, 0.30, 0.20, 0.20, 0.20]`（LR / RF-all / RF-Pearson / RF-Freg / RF-sklearn-Freg）
-  - 依据：RF 全特征单独表现最优故权重最高；LR 因线性假设受限权重最低；三组特征选择 RF 性能接近故权重均分
+- **加权融合**（model_fusion.py 的 `fuse_predictions` [纯 NumPy]）：对四个模型的预测值取加权平均
+  - 权重 `[0.10, 0.35, 0.275, 0.275]`（LR / RF-all / RF-Pearson / RF-sklearn-Freg）
+  - 依据：RF 全特征单独表现最优故权重最高；LR 因线性假设受限权重最低；两组特征选择 RF 性能接近故权重均分
 - 对比融合模型与所有单一模型的 MSE、MAE、R²
 - 输出：`output/advanced_mse_comparison.png`
 
@@ -106,9 +103,9 @@ CW2/
 
 | 文件 | 说明 |
 |------|------|
-| `output/mse_comparison.png` | 五个基线模型的 MSE 柱状图对比 |
-| `output/feature_selection_mse.png` | 三种特征选择方法（NumPy Pearson / NumPy F-test / sklearn SelectKBest）的 MSE 对比 |
-| `output/advanced_mse_comparison.png` | 单一模型与五模型加权融合的 MSE 对比 |
+| `output/mse_comparison.png` | 四个基线模型的 MSE 柱状图对比 |
+| `output/feature_selection_mse.png` | 两种特征选择方法（NumPy Pearson / sklearn SelectKBest）的 MSE 对比 |
+| `output/advanced_mse_comparison.png` | 单一模型与四模型加权融合的 MSE 对比 |
 | `output/geospatial_heatmap.png` | 10×10 地理网格预测误差热力图（去异常值前） |
 | `output/geospatial_heatmap_after_outlier_removal.png` | 10×10 热力图（去异常值后，统一色阶） |
 | `output/outlier_removal_comparison.png` | 去异常值前后 MSE/MAE 分组柱状图 |
