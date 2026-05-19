@@ -14,6 +14,7 @@ from feature_selection import select_features_numpy, select_features_sklearn_fre
 from models import train_random_forest, print_feature_importance
 from model_fusion import fuse_predictions
 from evaluation import compute_mse, compute_mae, compute_r2
+from visualization import plot_fusion_vs_single
 
 
 
@@ -129,6 +130,13 @@ def main(data=None):
     for name, (mse, mae, r2) in results.items():
         print(f"{name:<40} {mse:>10.4f} {mae:>10.4f} {r2:>10.4f}")
     print("=" * 80)
+
+    # --- Compare single models vs fusion ---
+    single_vs_fusion = {name: (mse, mae) for name, (mse, mae, _) in results.items()}
+    plot_fusion_vs_single(
+        single_vs_fusion,
+        save_path="output/fusion_vs_single.png",
+    )
 
     # Save results to text file
     with open("output/advanced_results.txt", "w", encoding="utf-8") as f:

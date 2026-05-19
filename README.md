@@ -18,7 +18,7 @@ CW2/
 ├── output/
 │   ├── mse_comparison.png                          # 所有模型 MSE 对比柱状图
 │   ├── feature_selection_mse.png                   # 特征选择方法 MSE 对比（2 种方法）
-
+│   ├── fusion_vs_single.png                         # 融合前后 MSE/MAE 对比
 │   ├── geospatial_heatmap.png                      # 10×10 地理预测误差热力图（去异常值前）
 │   ├── geospatial_heatmap_after_outlier_removal.png # 10×10 热力图（去异常值后）
 │   ├── outlier_removal_comparison.png              # 去异常值前后 MSE/MAE 对比
@@ -77,6 +77,7 @@ CW2/
   - 权重 `[0.10, 0.35, 0.275, 0.275]`（LR / RF-all / RF-Pearson / RF-sklearn-Freg）
   - 依据：RF 全特征单独表现最优故权重最高；LR 因线性假设受限权重最低；两组特征选择 RF 性能接近故权重均分
 - 对比融合模型与所有单一模型的 MSE、MAE、R²
+- 输出：`output/fusion_vs_single.png`
 
 ---
 
@@ -104,7 +105,7 @@ CW2/
 |------|------|
 | `output/mse_comparison.png` | 四个基线模型的 MSE 柱状图对比 |
 | `output/feature_selection_mse.png` | 两种特征选择方法（NumPy Pearson / sklearn SelectKBest）的 MSE 对比 |
-
+| `output/fusion_vs_single.png` | 单一模型与四模型加权融合的 MSE/MAE 对比 |
 | `output/geospatial_heatmap.png` | 10×10 地理网格预测误差热力图（去异常值前） |
 | `output/geospatial_heatmap_after_outlier_removal.png` | 10×10 热力图（去异常值后，统一色阶） |
 | `output/outlier_removal_comparison.png` | 去异常值前后 MSE/MAE 分组柱状图 |
