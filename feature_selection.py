@@ -36,20 +36,22 @@ def select_features_sklearn_freg(X, y, k=5):
     return selected_indices, scores
 
 
-def compare_feature_sets(indices_np, indices_freg, feature_names):
+def compare_feature_sets(indices_np, indices_freg, feature_names, verbose=True):
     set_np = set(indices_np)
     set_freg = set(indices_freg)
     intersection = set_np & set_freg
     only_np = set_np - set_freg
     only_freg = set_freg - set_np
 
-    print("\n=== Feature Selection Comparison ===")
-    print(f"NumPy Pearson  top-5: {[feature_names[i] for i in indices_np]}")
-    print(f"sklearn F-Reg  top-5: {[feature_names[i] for i in indices_freg]}")
-    print(f"Intersection:         {[feature_names[i] for i in intersection]}")
-    print(f"Only in Pearson:      {[feature_names[i] for i in only_np]}")
-    print(f"Only in F-Reg:        {[feature_names[i] for i in only_freg]}")
-    print("=" * 50)
+    if verbose:
+        print("\n--- Feature Selection Comparison ---")
+        print(f"NumPy Pearson  top-5: {[feature_names[i] for i in indices_np]}")
+        print(f"sklearn F-Reg  top-5: {[feature_names[i] for i in indices_freg]}")
+        print(f"Overlap:              {[feature_names[i] for i in intersection]}")
+        if only_np:
+            print(f"Only in Pearson:      {[feature_names[i] for i in only_np]}")
+        if only_freg:
+            print(f"Only in F-Reg:        {[feature_names[i] for i in only_freg]}")
 
     return {
         "intersection": [feature_names[i] for i in intersection],

@@ -16,7 +16,9 @@ def train_random_forest(X_train, y_train, random_state=None):
     return model
 
 
-def print_feature_importance(model, feature_names):
+def print_feature_importance(model, feature_names, verbose=True):
+    if not verbose:
+        return
     importances = model.feature_importances_
     idx_sorted = np.argsort(importances)[::-1]
     print(f"  {'Feature':<15}  Importance")

@@ -19,7 +19,6 @@ from sklearn.linear_model import LinearRegression
 # RANDOM SEED CONFIGURATION
 #   Set to an integer (e.g. 42) → fixed seed, results reproducible
 #   Set to None                  → random seed, results vary each run
-#   Change the value below to toggle:
 # ============================================================
 RANDOM_SEED = 42
 
@@ -35,154 +34,119 @@ import advanced
 def main():
     print("\n" + "=" * 60)
     print("INT101 California Housing Price Prediction")
-    print("=" * 60 + "\n")
+    print("=" * 60)
 
-    # ==================== Basic Layer ====================
+    # ==================== Basic Layer: Data Preprocessing ====================
+    print("\n" + "=" * 60)
+    print("  Basic Layer - 1. Data Loading & Preprocessing")
+    print("=" * 60)
 
-    # --- 1. Data loading & preprocessing ---
     X, y, feature_names = load_data()
     X_train, X_test, y_train, y_test = split_data(X, y, random_state=RANDOM_SEED)
     X_train, X_test = fill_missing_values(X_train, X_test)
     X_train_scaled, X_test_scaled, _ = standardize_features(X_train, X_test)
 
-    # --- 2. Baseline: Linear Regression (all features) ---
-    print("=" * 50)
-    print("Training: Linear Regression (all features)")
-    print("=" * 50)
+    # ==================== Basic Layer: Feature Selection ====================
+    print("=" * 60)
+    print("  Basic Layer - 2. Feature Selection")
+    print("=" * 60)
 
-    lr_model = LinearRegression()
-    lr_model.fit(X_train_scaled, y_train)
-    y_pred_lr = lr_model.predict(X_test_scaled)
-    mse_lr = compute_mse(y_test, y_pred_lr)
-    mae_lr = compute_mae(y_test, y_pred_lr)
-    rmse_lr = np.sqrt(mse_lr)
-
-    print(f"[OK] Linear Regression trained")
-    print(f"  Intercept: {lr_model.intercept_:.6f}")
-    print(f"  Coefficients:")
-    for name, coef in zip(feature_names, lr_model.coef_):
-        print(f"    {name:15s}: {coef:.6f}")
-    print(f"\n  MSE:  {mse_lr:.4f}")
-    print(f"  MAE:  {mae_lr:.4f}")
-    print(f"  RMSE: {rmse_lr:.4f}\n")
-
-    # --- 3. Feature selection ---
-    print("=" * 50)
-    print("Feature Selection 1: NumPy Pearson Correlation")
-    print("=" * 50)
+    print("\n--- Method A: NumPy Pearson Correlation (manual implementation) ---")
     indices_numpy, scores_numpy = select_features_numpy(X_train, y_train, k=5)
-    print(f"Selected indices: {indices_numpy}")
-    print(f"Feature names:    {[feature_names[i] for i in indices_numpy]}")
-    print(f"Pearson scores:   {scores_numpy}")
+    print(f"  Selected indices: {indices_numpy}")
+    print(f"  Feature names:    {[feature_names[i] for i in indices_numpy]}")
+    print(f"  Pearson r:        {[f'{v:+.4f}' for v in scores_numpy]}")
 
-    print(f"\n{'=' * 50}")
-    print("Feature Selection 2: sklearn SelectKBest + F-Regression")
-    print("=" * 50)
+    print("\n--- Method B: sklearn SelectKBest + F-Regression ---")
     indices_skfreg, scores_skfreg = select_features_sklearn_freg(X_train, y_train, k=5)
-    print(f"Selected indices: {indices_skfreg}")
-    print(f"Feature names:    {[feature_names[i] for i in indices_skfreg]}")
-    print(f"F-scores:         {scores_skfreg}")
+    print(f"  Selected indices: {indices_skfreg}")
+    print(f"  Feature names:    {[feature_names[i] for i in indices_skfreg]}")
+    print(f"  F-scores:         {[f'{v:.2f}' for v in scores_skfreg]}")
 
     compare_feature_sets(indices_numpy, indices_skfreg, feature_names)
 
-    # --- 4. Random Forest (all features) ---
-    print(f"\n{'=' * 50}")
-    print("Training: Random Forest (all features)")
-    print("=" * 50)
+    # ==================== Basic Layer: Model Training ====================
+    print("\n" + "=" * 60)
+    print("  Basic Layer - 3. Model Training")
+    print("=" * 60)
+
+    # --- Linear Regression ---
+    print("\n[1/4] Training Linear Regression (all features)...")
+    lr_model = LinearRegression()
+    lr_model.fit(X_train_scaled, y_train)
+    y_pred_lr = lr_model.predict(X_test_scaled)
+    print(f"  Intercept: {lr_model.intercept_:.6f}")
+    for name, coef in zip(feature_names, lr_model.coef_):
+        print(f"    {name:15s}: {coef:+.6f}")
+
+    # --- Random Forest (all features) ---
+    print("\n[2/4] Training Random Forest (all features)...")
     rf_all_model = train_random_forest(X_train_scaled, y_train, random_state=RANDOM_SEED)
     y_pred_rf_all = rf_all_model.predict(X_test_scaled)
-    mse_rf_all = compute_mse(y_test, y_pred_rf_all)
-    mae_rf_all = compute_mae(y_test, y_pred_rf_all)
-    rmse_rf_all = np.sqrt(mse_rf_all)
-    print(f"RF (all features) MSE:  {mse_rf_all:.4f}")
-    print(f"RF (all features) MAE:  {mae_rf_all:.4f}")
-    print(f"RF (all features) RMSE: {rmse_rf_all:.4f}")
-    print(f"RF (all features) R2:   {compute_r2(y_test, y_pred_rf_all):.4f}")
+    print("  Feature Importance:")
     print_feature_importance(rf_all_model, feature_names)
 
-    # --- 5. Random Forest (NumPy Pearson features) ---
-    print(f"\n{'=' * 50}")
-    print("Training: Random Forest (NumPy Pearson features)")
-    print("=" * 50)
-    rf_np_model = train_random_forest(X_train_scaled[:, indices_numpy], y_train, random_state=RANDOM_SEED)
+    # --- Random Forest (NumPy Pearson top-5) ---
+    print("[3/4] Training Random Forest (NumPy Pearson features)")
+    rf_np_model = train_random_forest(
+        X_train_scaled[:, indices_numpy], y_train, random_state=RANDOM_SEED)
     y_pred_rf_np = rf_np_model.predict(X_test_scaled[:, indices_numpy])
-    mse_rf_numpy = compute_mse(y_test, y_pred_rf_np)
-    mae_rf_numpy = compute_mae(y_test, y_pred_rf_np)
-    r2_rf_numpy = compute_r2(y_test, y_pred_rf_np)
-    print(f"RF (NumPy Pearson) MSE: {mse_rf_numpy:.4f}")
-    print(f"RF (NumPy Pearson) MAE: {mae_rf_numpy:.4f}")
-    print(f"RF (NumPy Pearson) R2:  {r2_rf_numpy:.4f}")
-    print_feature_importance(rf_np_model, [feature_names[i] for i in indices_numpy])
+    names_np = [feature_names[i] for i in indices_numpy]
+    print("  Feature Importance (NumPy Pearson top-5):")
+    print_feature_importance(rf_np_model, names_np)
 
-    # --- 6. Random Forest (sklearn SelectKBest + F-Regression features) ---
-    print(f"\n{'=' * 50}")
-    print("Training: Random Forest (sklearn SelectKBest + F-Regression features)")
-    print("=" * 50)
-    rf_skfreg_model = train_random_forest(X_train_scaled[:, indices_skfreg], y_train, random_state=RANDOM_SEED)
+    # --- Random Forest (sklearn F-Reg top-5) ---
+    print("[4/4] Training Random Forest (sklearn F-Reg features)")
+    rf_skfreg_model = train_random_forest(
+        X_train_scaled[:, indices_skfreg], y_train, random_state=RANDOM_SEED)
     y_pred_rf_skfreg = rf_skfreg_model.predict(X_test_scaled[:, indices_skfreg])
-    mse_rf_skfreg = compute_mse(y_test, y_pred_rf_skfreg)
-    mae_rf_skfreg = compute_mae(y_test, y_pred_rf_skfreg)
-    r2_rf_skfreg = compute_r2(y_test, y_pred_rf_skfreg)
-    print(f"RF (sklearn F-Reg) MSE: {mse_rf_skfreg:.4f}")
-    print(f"RF (sklearn F-Reg) MAE: {mae_rf_skfreg:.4f}")
-    print(f"RF (sklearn F-Reg) R2:  {r2_rf_skfreg:.4f}")
-    print_feature_importance(rf_skfreg_model, [feature_names[i] for i in indices_skfreg])
+    names_sk = [feature_names[i] for i in indices_skfreg]
+    print("  Feature Importance (sklearn F-Reg top-5):")
+    print_feature_importance(rf_skfreg_model, names_sk)
 
-    # --- 7. Charts ---
-    os.makedirs("output", exist_ok=True)
+    # Compute metrics helper
+    def metrics(y_true, y_pred):
+        mse = compute_mse(y_true, y_pred)
+        return mse, np.sqrt(mse), compute_mae(y_true, y_pred), compute_r2(y_true, y_pred)
 
-    mse_dict_all = {
-        "Linear Regression\n(all features)": mse_lr,
-        "Random Forest\n(all features)": mse_rf_all,
-        "Random Forest\n(NumPy Pearson)": mse_rf_numpy,
-        "Random Forest\n(sklearn F-Reg)": mse_rf_skfreg,
-    }
-    plot_mse_comparison(mse_dict_all, save_path="output/mse_comparison.png",
-                        title="All Models: Test Set MSE Comparison")
+    mse_lr,   rmse_lr,   mae_lr,   r2_lr   = metrics(y_test, y_pred_lr)
+    mse_rf_all, rmse_rf_all, mae_rf_all, r2_rf_all = metrics(y_test, y_pred_rf_all)
+    mse_rf_np,  rmse_rf_np,  mae_rf_np,  r2_rf_np  = metrics(y_test, y_pred_rf_np)
+    mse_rf_sk,  rmse_rf_sk,  mae_rf_sk,  r2_rf_sk  = metrics(y_test, y_pred_rf_skfreg)
 
-    fs_mse_dict = {
-        "NumPy Pearson": mse_rf_numpy,
-        "sklearn\nSelectKBest+F": mse_rf_skfreg,
-    }
-    plot_mse_comparison(fs_mse_dict, save_path="output/feature_selection_mse.png",
-                        title="Feature Selection Method vs. Test Set MSE")
-
-    # --- 8. Summary ---
-    print("\n" + "=" * 85)
-    print("Basic Layer: Model Performance Summary")
-    print("=" * 85)
-    print(f"{'Model':<35} {'MSE':<12} {'RMSE':<12} {'R2':<12}")
-    print("-" * 75)
-    print(f"{'Linear Regression (all)':<35} {mse_lr:<12.4f} {rmse_lr:<12.4f} {compute_r2(y_test, y_pred_lr):<12.4f}")
-    print(f"{'Random Forest (all)':<35} {mse_rf_all:<12.4f} {rmse_rf_all:<12.4f} {compute_r2(y_test, y_pred_rf_all):<12.4f}")
-    print(f"{'RF (NumPy Pearson 5)':<35} {mse_rf_numpy:<12.4f} {np.sqrt(mse_rf_numpy):<12.4f} {r2_rf_numpy:<12.4f}")
-    print(f"{'RF (sklearn F-Reg 5)':<35} {mse_rf_skfreg:<12.4f} {np.sqrt(mse_rf_skfreg):<12.4f} {r2_rf_skfreg:<12.4f}")
-    print("=" * 85)
-
-    best_basic_mse = min(mse_rf_all, mse_rf_numpy, mse_rf_skfreg)
-    print(f"\nBest RF MSE: {best_basic_mse:.4f}")
-    print(f"vs. Linear Regression: MSE reduced by "
-          f"{(mse_lr - best_basic_mse) / mse_lr * 100:.1f}%")
-
-    # --- 9. Save results ---
-    with open("output/baseline_results.txt", "w", encoding="utf-8") as f:
-        f.write("=" * 50 + "\n")
-        f.write("Model Performance Comparison\n")
-        f.write("=" * 50 + "\n")
-        f.write(f"Linear Regression (all)    MSE: {mse_lr:.6f}   RMSE: {rmse_lr:.6f}   R2: {compute_r2(y_test, y_pred_lr):.6f}\n")
-        f.write(f"Random Forest (all)        MSE: {mse_rf_all:.6f}   RMSE: {rmse_rf_all:.6f}   R2: {compute_r2(y_test, y_pred_rf_all):.6f}\n")
-        f.write(f"RF (NumPy Pearson 5)       MSE: {mse_rf_numpy:.6f}   R2: {r2_rf_numpy:.6f}\n")
-        f.write(f"RF (sklearn F-Reg 5)        MSE: {mse_rf_skfreg:.6f}   R2: {r2_rf_skfreg:.6f}\n")
-        f.write("=" * 50 + "\n")
-        f.write(f"\nLinear Regression Coefficients:\n")
-        for name, coef in zip(feature_names, lr_model.coef_):
-            f.write(f"  {name:15s}: {coef:.6f}\n")
-
-    print("\n[OK] Results saved to output/baseline_results.txt")
-
-    # ==================== Advanced Layer ====================
+    # ==================== Basic Layer: Summary ====================
     print("\n" + "=" * 60)
-    print("Advanced Layer")
+    print("  Basic Layer - 4. Single-Model Performance Summary")
+    print("=" * 60)
+    print(f"{'Model':<35} {'MSE':<10} {'RMSE':<10} {'MAE':<10} {'R2':<10}")
+    print("-" * 75)
+    print(f"{'Linear Regression (all)':<35} {mse_lr:<10.4f} {rmse_lr:<10.4f} {mae_lr:<10.4f} {r2_lr:<10.4f}")
+    print(f"{'Random Forest (all)':<35} {mse_rf_all:<10.4f} {rmse_rf_all:<10.4f} {mae_rf_all:<10.4f} {r2_rf_all:<10.4f}")
+    print(f"{'RF (NumPy Pearson 5)':<35} {mse_rf_np:<10.4f} {rmse_rf_np:<10.4f} {mae_rf_np:<10.4f} {r2_rf_np:<10.4f}")
+    print(f"{'RF (sklearn F-Reg 5)':<35} {mse_rf_sk:<10.4f} {rmse_rf_sk:<10.4f} {mae_rf_sk:<10.4f} {r2_rf_sk:<10.4f}")
+    print("-" * 75)
+
+    best_basic_mse = min(mse_rf_all, mse_rf_np, mse_rf_sk)
+    print(f"  Best RF MSE: {best_basic_mse:.4f} "
+          f"(vs. Linear Regression: {(mse_lr - best_basic_mse) / mse_lr * 100:.1f}% reduction)")
+
+    # --- Basic layer charts ---
+    os.makedirs("output", exist_ok=True)
+    plot_mse_comparison(
+        {"LR (all)": mse_lr, "RF (all)": mse_rf_all,
+         "RF (NP)": mse_rf_np, "RF (F-Reg)": mse_rf_sk},
+        save_path="output/mse_comparison.png",
+        title="Basic Layer: Test Set MSE Comparison",
+    )
+    plot_mse_comparison(
+        {"NumPy Pearson": mse_rf_np, "sklearn F-Reg": mse_rf_sk},
+        save_path="output/feature_selection_mse.png",
+        title="Feature Selection: NumPy Pearson vs sklearn F-Reg (MSE)",
+    )
+
+    # ==================== Advanced Layer: Weighted Fusion ====================
+    print("\n" + "=" * 60)
+    print("  Advanced Layer - Model Fusion (Weighted Fusion)")
     print("=" * 60)
 
     advanced_results = advanced.main(data={
@@ -192,52 +156,62 @@ def main():
         'X_test_scaled': X_test_scaled,
         'feature_names': feature_names,
         'random_state': RANDOM_SEED,
+        'predictions': (y_pred_lr, y_pred_rf_all, y_pred_rf_np, y_pred_rf_skfreg),
+        'verbose': False,
     })
+
+    fusion_entry = advanced_results['all_results']['Weighted Fusion']
+    mse_fusion, mae_fusion, r2_fusion = fusion_entry
+    rmse_fusion = np.sqrt(mse_fusion)
+
+    print(f"\n  Fusion weights: LR=0.10, RF(all)=0.35, RF(NP)=0.275, RF(F-Reg)=0.275")
+    print(f"  Weighted Fusion  MSE: {mse_fusion:.4f}  RMSE: {rmse_fusion:.4f}  "
+          f"MAE: {mae_fusion:.4f}  R2: {r2_fusion:.4f}")
 
     # ==================== Extended Layer ====================
     print("\n" + "=" * 60)
-    print("Extended Layer: Geospatial Heatmap & Outlier Analysis")
+    print("  Extended Layer - Geospatial Visualization & Outlier Analysis")
     print("=" * 60)
 
-    # --- Geospatial heatmap (10x10 grid) ---
+    # --- Geospatial heatmap ---
+    print("\n--- Geospatial Prediction Error Heatmap ---")
     lat_idx = feature_names.index('Latitude')
     lon_idx = feature_names.index('Longitude')
     _, heatmap_vmax = plot_geospatial_heatmap(
         X_test, y_test, y_pred_rf_all,
-        lat_idx, lon_idx,
-        grid_size=10,
+        lat_idx, lon_idx, grid_size=10,
         save_path="output/geospatial_heatmap.png",
     )
 
-    # --- Outlier detection & analysis ---
+    # --- Outlier detection ---
+    print("\n--- Outlier Detection & Analysis ---")
     outlier_mask = detect_outliers_iqr(y, factor=1.5)
     analyze_outlier_features(X, y, outlier_mask, feature_names)
 
-    # --- Determine best model across Basic + Advanced ---
-    all_model_metrics = {"RF (all features)": (mse_rf_all, mae_rf_all)}
-    if advanced_results and 'all_results' in advanced_results:
-        for name, (mse_val, mae_val, _) in advanced_results['all_results'].items():
-            all_model_metrics[name] = (mse_val, mae_val)
-
+    # --- Retrain after outlier removal ---
+    print("\n--- Retraining Best Model After Outlier Removal ---")
+    all_model_metrics = {
+        "Linear Regression (all)": (mse_lr, mae_lr),
+        "RF (all features)": (mse_rf_all, mae_rf_all),
+        "RF (NumPy Pearson)": (mse_rf_np, mae_rf_np),
+        "RF (sklearn F-Reg)": (mse_rf_sk, mae_rf_sk),
+        "Weighted Fusion": (mse_fusion, mae_fusion),
+    }
     best_name = min(all_model_metrics, key=lambda k: all_model_metrics[k][0])
     best_mse_before, best_mae_before = all_model_metrics[best_name]
 
-    print(f"\nBest model overall: {best_name} (MSE = {best_mse_before:.4f})")
-    print(f"Retraining after removing outliers...")
+    print(f"  Overall best model: {best_name} (MSE = {best_mse_before:.4f})")
 
     mse_after, mae_after, X_clean_test, y_clean_test, y_clean_pred = \
         retrain_best_model_after_outlier_removal(
             X, y, best_name, outlier_mask, random_state=RANDOM_SEED
         )
 
-    print(f"\n{'=' * 55}")
-    print(f"Outlier Removal: Performance Comparison")
-    print(f"{'=' * 55}")
-    print(f"Model: {best_name}")
-    print(f"  Before: MSE = {best_mse_before:.4f}, MAE = {best_mae_before:.4f}")
-    print(f"  After:  MSE = {mse_after:.4f}, MAE = {mae_after:.4f}")
     mse_change = (best_mse_before - mse_after) / best_mse_before * 100
     mae_change = (best_mae_before - mae_after) / best_mae_before * 100
+
+    print(f"  Before removal: MSE = {best_mse_before:.4f}, MAE = {best_mae_before:.4f}")
+    print(f"  After removal:  MSE = {mse_after:.4f}, MAE = {mae_after:.4f}")
     print(f"  MSE change: {mse_change:+.2f}%")
     print(f"  MAE change: {mae_change:+.2f}%")
 
@@ -245,17 +219,47 @@ def main():
         best_mse_before, best_mae_before, mse_after, mae_after,
         best_name, save_path="output/outlier_removal_comparison.png",
     )
-
-    # --- Geospatial heatmap after outlier removal (same color scale) ---
     plot_geospatial_heatmap(
         X_clean_test, y_clean_test, y_clean_pred,
-        lat_idx, lon_idx,
-        grid_size=10,
+        lat_idx, lon_idx, grid_size=10,
         save_path="output/geospatial_heatmap_after_outlier_removal.png",
         vmin=0, vmax=heatmap_vmax,
     )
 
-    print("\n=== Pipeline Complete ===")
+    # ==================== Final Overview ====================
+    print("\n" + "=" * 90)
+    print("  FINAL OVERVIEW - All Models Performance Comparison")
+    print("=" * 90)
+    print(f"{'Model':<30} {'MSE':>10} {'RMSE':>10} {'MAE':>10} {'R2':>10}")
+    print("-" * 72)
+    print(f"{'Linear Regression (all)':<30} {mse_lr:>10.4f} {rmse_lr:>10.4f} {mae_lr:>10.4f} {r2_lr:>10.4f}")
+    print(f"{'Random Forest (all)':<30} {mse_rf_all:>10.4f} {rmse_rf_all:>10.4f} {mae_rf_all:>10.4f} {r2_rf_all:>10.4f}")
+    print(f"{'RF (NumPy Pearson 5)':<30} {mse_rf_np:>10.4f} {rmse_rf_np:>10.4f} {mae_rf_np:>10.4f} {r2_rf_np:>10.4f}")
+    print(f"{'RF (sklearn F-Reg 5)':<30} {mse_rf_sk:>10.4f} {rmse_rf_sk:>10.4f} {mae_rf_sk:>10.4f} {r2_rf_sk:>10.4f}")
+    print(f"{'Weighted Fusion':<30} {mse_fusion:>10.4f} {rmse_fusion:>10.4f} {mae_fusion:>10.4f} {r2_fusion:>10.4f}")
+    print("-" * 72)
+    print(f"\n  Best model: {best_name} (MSE = {min(all_model_metrics.values(), key=lambda x: x[0])[0]:.4f})")
+    print(f"  Outlier removal ({best_name}): MSE {mse_change:+.1f}%, MAE {mae_change:+.1f}%")
+    print("=" * 90)
+
+    # --- Save text results ---
+    with open("output/baseline_results.txt", "w", encoding="utf-8") as f:
+        f.write("Model Performance Summary\n")
+        f.write("=" * 50 + "\n")
+        f.write(f"{'Model':<30} {'MSE':>10} {'RMSE':>10} {'R2':>10}\n")
+        f.write("-" * 60 + "\n")
+        f.write(f"{'Linear Regression (all)':<30} {mse_lr:>10.6f} {rmse_lr:>10.6f} {r2_lr:>10.6f}\n")
+        f.write(f"{'Random Forest (all)':<30} {mse_rf_all:>10.6f} {rmse_rf_all:>10.6f} {r2_rf_all:>10.6f}\n")
+        f.write(f"{'RF (NumPy Pearson 5)':<30} {mse_rf_np:>10.6f} {rmse_rf_np:>10.6f} {r2_rf_np:>10.6f}\n")
+        f.write(f"{'RF (sklearn F-Reg 5)':<30} {mse_rf_sk:>10.6f} {rmse_rf_sk:>10.6f} {r2_rf_sk:>10.6f}\n")
+        f.write(f"{'Weighted Fusion':<30} {mse_fusion:>10.6f} {rmse_fusion:>10.6f} {r2_fusion:>10.6f}\n")
+        f.write("=" * 50 + "\n")
+        f.write(f"\nLinear Regression Coefficients:\n")
+        for name, coef in zip(feature_names, lr_model.coef_):
+            f.write(f"  {name:15s}: {coef:.6f}\n")
+
+    print("\n[OK] Results saved to output/baseline_results.txt")
+    print("=== Pipeline Complete ===\n")
 
 
 if __name__ == "__main__":

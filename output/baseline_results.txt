@@ -1,10 +1,12 @@
+Model Performance Summary
 ==================================================
-Model Performance Comparison
-==================================================
-Linear Regression (all)    MSE: 0.456094   RMSE: 0.675347   R2: 0.651945
-Random Forest (all)        MSE: 0.253079   RMSE: 0.503070   R2: 0.806870
-RF (NumPy Pearson 5)       MSE: 0.400396   R2: 0.694450
-RF (sklearn F-Reg 5)        MSE: 0.400396   R2: 0.694450
+Model                                 MSE       RMSE         R2
+------------------------------------------------------------
+Linear Regression (all)          0.456094   0.675347   0.651945
+Random Forest (all)              0.253079   0.503070   0.806870
+RF (NumPy Pearson 5)             0.400396   0.632768   0.694450
+RF (sklearn F-Reg 5)             0.400396   0.632768   0.694450
+Weighted Fusion                  0.316727   0.562785   0.758299
 ==================================================
 
 Linear Regression Coefficients:

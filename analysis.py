@@ -17,34 +17,36 @@ def detect_outliers_iqr(y, factor=1.5):
 
 
 # ========== NumPy-only implementation ==========
-def analyze_outlier_features(X, y, outlier_mask, feature_names):
+def analyze_outlier_features(X, y, outlier_mask, feature_names, verbose=True):
     outliers_X = X[outlier_mask]
     normal_X = X[~outlier_mask]
     outliers_y = y[outlier_mask]
     normal_y = y[~outlier_mask]
 
-    print("\n=== Outlier Analysis ===")
-    print(f"Outliers: {np.sum(outlier_mask)} ({np.mean(outlier_mask) * 100:.2f}%)")
-    print(f"Outlier target range: [{outliers_y.min():.4f}, {outliers_y.max():.4f}]")
-    print(f"Normal  target range: [{normal_y.min():.4f}, {normal_y.max():.4f}]")
-
-    print(f"\nFeature mean comparison:")
-    print(f"{'Feature':<15} {'Normal':>12} {'Outlier':>12}")
-    print("-" * 42)
-    for i, name in enumerate(feature_names):
-        print(f"{name:<15} {np.mean(normal_X[:, i]):>12.4f} {np.mean(outliers_X[:, i]):>12.4f}")
+    if verbose:
+        print("\n--- Outlier Analysis ---")
+        print(f"Outliers: {np.sum(outlier_mask)} ({np.mean(outlier_mask) * 100:.2f}%)")
+        print(f"Outlier target range: [{outliers_y.min():.4f}, {outliers_y.max():.4f}]")
+        print(f"Normal  target range: [{normal_y.min():.4f}, {normal_y.max():.4f}]")
+        print(f"\nFeature mean comparison:")
+        print(f"{'Feature':<15} {'Normal':>12} {'Outlier':>12}")
+        print("-" * 42)
+        for i, name in enumerate(feature_names):
+            print(f"{name:<15} {np.mean(normal_X[:, i]):>12.4f} {np.mean(outliers_X[:, i]):>12.4f}")
 
     return outliers_X, normal_X
 
 
 # ========== sklearn (StandardScaler + models) + NumPy fusion ==========
 def retrain_best_model_after_outlier_removal(X, y, best_model_name, outlier_mask,
-                                             test_size=0.2, random_state=None):
+                                             test_size=0.2, random_state=None,
+                                             verbose=True):
     X_clean = X[~outlier_mask]
     y_clean = y[~outlier_mask]
 
-    print(f"  Samples before: {len(y)}, after: {len(y_clean)} "
-          f"(removed {np.sum(outlier_mask)})")
+    if verbose:
+        print(f"  Samples before: {len(y)}, after: {len(y_clean)} "
+              f"(removed {np.sum(outlier_mask)})")
 
     X_train, X_test, y_train, y_test = train_test_split(
         X_clean, y_clean, test_size=test_size, random_state=random_state

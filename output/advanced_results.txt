@@ -3,9 +3,9 @@ Advanced Layer: Single Models vs Weighted Fusion
 ======================================================================
 Model                                           MSE        MAE         R2
 ----------------------------------------------------------------------
-Linear Regression (all features)           0.456094   0.486164   0.651945
+Linear Regression (all)                    0.456094   0.486164   0.651945
 RF (all features)                          0.253079   0.327625   0.806870
-RF (NumPy Pearson features)                0.400396   0.436873   0.694450
-RF (sklearn F-Reg features)                0.400396   0.436873   0.694450
+RF (NumPy Pearson)                         0.400396   0.436873   0.694450
+RF (sklearn F-Reg)                         0.400396   0.436873   0.694450
 Weighted Fusion                            0.316727   0.383068   0.758299
 ======================================================================

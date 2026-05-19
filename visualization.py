@@ -11,7 +11,8 @@ def _ensure_dir(path):
 
 # ========== matplotlib (no sklearn) ==========
 def plot_mse_comparison(mse_dict, save_path="output/mse_comparison.png",
-                        title="Feature Selection Method vs. Test Set MSE"):
+                        title="Feature Selection Method vs. Test Set MSE",
+                        verbose=True):
     _ensure_dir(save_path)
 
     models = list(mse_dict.keys())
@@ -32,13 +33,14 @@ def plot_mse_comparison(mse_dict, save_path="output/mse_comparison.png",
     plt.tight_layout()
     plt.savefig(save_path, dpi=150)
     plt.close()
-    print(f"[OK] Chart saved to {save_path}")
+    if verbose:
+        print(f"[OK] Chart saved to {save_path}")
 
 
 # ========== NumPy-only implementation (grid calculation) + matplotlib ==========
 def plot_geospatial_heatmap(X_test, y_test, y_pred, lat_idx, lon_idx,
                             grid_size=10, save_path="output/geospatial_heatmap.png",
-                            vmin=None, vmax=None):
+                            vmin=None, vmax=None, verbose=True):
     _ensure_dir(save_path)
 
     lats = X_test[:, lat_idx]
@@ -76,12 +78,14 @@ def plot_geospatial_heatmap(X_test, y_test, y_pred, lat_idx, lon_idx,
     plt.tight_layout()
     plt.savefig(save_path, dpi=150)
     plt.close()
-    print(f"[OK] Heatmap saved to {save_path}")
+    if verbose:
+        print(f"[OK] Heatmap saved to {save_path}")
     return vmin, vmax
 
 
 # ========== matplotlib (no sklearn) ==========
-def plot_fusion_vs_single(results_dict, save_path="output/fusion_vs_single.png"):
+def plot_fusion_vs_single(results_dict, save_path="output/fusion_vs_single.png",
+                          verbose=True):
     """
     results_dict: {model_name: (MSE, MAE), ...}
     Draws grouped bar chart: each model has MSE + MAE bars side by side.
@@ -115,12 +119,14 @@ def plot_fusion_vs_single(results_dict, save_path="output/fusion_vs_single.png")
     plt.tight_layout()
     plt.savefig(save_path, dpi=150)
     plt.close()
-    print(f"[OK] Chart saved to {save_path}")
+    if verbose:
+        print(f"[OK] Chart saved to {save_path}")
 
 
 # ========== matplotlib (no sklearn) ==========
 def plot_outlier_removal_comparison(mse_before, mae_before, mse_after, mae_after,
-                                     model_name, save_path="output/outlier_removal_comparison.png"):
+                                     model_name, save_path="output/outlier_removal_comparison.png",
+                                     verbose=True):
     _ensure_dir(save_path)
 
     metrics = ["MSE", "MAE"]
@@ -152,4 +158,5 @@ def plot_outlier_removal_comparison(mse_before, mae_before, mse_after, mae_after
     plt.tight_layout()
     plt.savefig(save_path, dpi=150)
     plt.close()
-    print(f"[OK] Chart saved to {save_path}")
+    if verbose:
+        print(f"[OK] Chart saved to {save_path}")
