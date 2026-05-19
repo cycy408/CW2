@@ -14,7 +14,7 @@ from feature_selection import select_features_numpy, select_features_sklearn_fre
 from models import train_random_forest, print_feature_importance
 from model_fusion import fuse_predictions
 from evaluation import compute_mse, compute_mae, compute_r2
-from visualization import plot_mse_comparison
+from visualization import plot_fusion_vs_single
 
 
 def main(data=None):
@@ -130,16 +130,25 @@ def main(data=None):
         print(f"{name:<40} {mse:>10.4f} {mae:>10.4f} {r2:>10.4f}")
     print("=" * 80)
 
-    # --- Required chart: Feature Selection Method vs. Test Set MSE ---
-    fs_mse_dict = {
-        "NumPy Pearson": compute_mse(y_test, y_pred_rf_np),
-        "sklearn\nSelectKBest+F": compute_mse(y_test, y_pred_rf_skfreg),
-    }
-    plot_mse_comparison(
-        fs_mse_dict,
-        save_path="output/advanced_mse_comparison.png",
-        title="Feature Selection Method vs. Test Set MSE",
+    # --- Compare single models vs fusion ---
+    single_vs_fusion = {name: (mse, mae) for name, (mse, mae, _) in results.items()}
+    plot_fusion_vs_single(
+        single_vs_fusion,
+        save_path="output/fusion_vs_single.png",
     )
+
+    # Save results to text file
+    with open("output/advanced_results.txt", "w", encoding="utf-8") as f:
+        f.write("=" * 70 + "\n")
+        f.write("Advanced Layer: Single Models vs Weighted Fusion\n")
+        f.write("=" * 70 + "\n")
+        f.write(f"{'Model':<40} {'MSE':>10} {'MAE':>10} {'R2':>10}\n")
+        f.write("-" * 70 + "\n")
+        for name, (mse, mae, r2) in results.items():
+            f.write(f"{name:<40} {mse:>10.6f} {mae:>10.6f} {r2:>10.6f}\n")
+        f.write("=" * 70 + "\n")
+
+    print("\n[OK] Results saved to output/advanced_results.txt")
 
     best_name = min(results, key=lambda k: results[k][0])
     best_mse, best_mae, _ = results[best_name]

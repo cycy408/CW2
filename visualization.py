@@ -81,6 +81,44 @@ def plot_geospatial_heatmap(X_test, y_test, y_pred, lat_idx, lon_idx,
 
 
 # ========== matplotlib (no sklearn) ==========
+def plot_fusion_vs_single(results_dict, save_path="output/fusion_vs_single.png"):
+    """
+    results_dict: {model_name: (MSE, MAE), ...}
+    Draws grouped bar chart: each model has MSE + MAE bars side by side.
+    """
+    _ensure_dir(save_path)
+
+    names = list(results_dict.keys())
+    mse_vals = [results_dict[n][0] for n in names]
+    mae_vals = [results_dict[n][1] for n in names]
+
+    x = np.arange(len(names))
+    width = 0.35
+
+    fig, ax = plt.subplots(figsize=(12, 6))
+    bars_mse = ax.bar(x - width / 2, mse_vals, width, label="MSE", color="#1f77b4")
+    bars_mae = ax.bar(x + width / 2, mae_vals, width, label="MAE", color="#ff7f0e")
+
+    ax.set_ylabel("Error Value", fontsize=12)
+    ax.set_title("Single Models vs Weighted Fusion: MSE & MAE Comparison", fontsize=14)
+    ax.set_xticks(x)
+    ax.set_xticklabels(names, rotation=20, ha="right")
+    ax.legend()
+
+    for bar, val in zip(bars_mse, mse_vals):
+        ax.text(bar.get_x() + bar.get_width() / 2, bar.get_height() * 1.01,
+                f"{val:.4f}", ha="center", va="bottom", fontsize=9)
+    for bar, val in zip(bars_mae, mae_vals):
+        ax.text(bar.get_x() + bar.get_width() / 2, bar.get_height() * 1.01,
+                f"{val:.4f}", ha="center", va="bottom", fontsize=9)
+
+    plt.tight_layout()
+    plt.savefig(save_path, dpi=150)
+    plt.close()
+    print(f"[OK] Chart saved to {save_path}")
+
+
+# ========== matplotlib (no sklearn) ==========
 def plot_outlier_removal_comparison(mse_before, mae_before, mse_after, mae_after,
                                      model_name, save_path="output/outlier_removal_comparison.png"):
     _ensure_dir(save_path)
