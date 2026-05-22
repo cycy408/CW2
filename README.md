@@ -10,11 +10,11 @@ CW2/
 ├── data_prep.py            # 数据加载（pandas）与预处理 [sklearn + NumPy]
 ├── feature_selection.py    # 两种特征选择方法（NumPy 手动 + sklearn）
 ├── models.py               # 随机森林训练 [sklearn]
-├── model_fusion.py         # 加权平均融合 [纯 NumPy]
+├── model_fusion.py         # 模型融合：训练四模型 + 加权融合
 ├── evaluation.py           # MSE、MAE、R² 评估指标 [纯 NumPy]
 ├── analysis.py             # 异常值检测（IQR）与分析 [NumPy + sklearn]
 ├── visualization.py        # 柱状图与地理热力图 [matplotlib + NumPy]
-├── advanced.py             # 进阶层：四模型训练与加权融合
+├── advanced.py             # 进阶层：模型融合性能对比与评估
 ├── output/
 │   ├── mse_comparison.png                          # 所有模型 MSE 对比柱状图
 │   ├── feature_selection_mse.png                   # 特征选择方法 MSE 对比（2 种方法）
@@ -68,12 +68,9 @@ CW2/
 
 **advanced.py**（由 `main()` 调用，也可独立运行）
 
-- 重新执行两种特征选择，训练四个模型：
-  - 线性回归（全特征）
-  - 随机森林（全特征）
-  - 随机森林（NumPy Pearson 选出的 5 个特征）
-  - 随机森林（sklearn SelectKBest + F-Regression 选出的 5 个特征）
-- **加权融合**（model_fusion.py 的 `fuse_predictions` [纯 NumPy]）：对四个模型的预测值取加权平均
+- 当作为进阶层组件被 `main()` 调用时，接收基础层已计算好的四个模型预测值，直接进行加权融合
+- 当独立运行时，调用 `model_fusion.py` 的 `train_and_fuse_models()` 自动完成特征选择、训练、融合全流程
+- **加权融合**（model_fusion.py 的 `train_and_fuse_models`）：自动执行两种特征选择，训练四个模型（LR / RF-all / RF-Pearson / RF-sklearn-Freg），对预测值取加权平均
   - 权重 `[0.10, 0.35, 0.275, 0.275]`（LR / RF-all / RF-Pearson / RF-sklearn-Freg）
   - 依据：RF 全特征单独表现最优故权重最高；LR 因线性假设受限权重最低；两组特征选择 RF 性能接近故权重均分
 - 对比融合模型与所有单一模型的 MSE、MAE、R²

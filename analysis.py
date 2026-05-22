@@ -1,10 +1,8 @@
 import numpy as np
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
-from sklearn.linear_model import LinearRegression
-
 from models import train_random_forest
-from model_fusion import fuse_predictions
+from model_fusion import train_and_fuse_models
 from feature_selection import select_features_numpy, select_features_sklearn_freg
 from evaluation import compute_mse, compute_mae
 
@@ -56,26 +54,11 @@ def retrain_best_model_after_outlier_removal(X, y, best_model_name, outlier_mask
     X_test_s = scaler.transform(X_test)
 
     if "Weighted Fusion" in best_model_name:
-        indices_np, _ = select_features_numpy(X_train, y_train, k=5)
-        indices_skfreg, _ = select_features_sklearn_freg(X_train, y_train, k=5)
-
-        lr = LinearRegression()
-        lr.fit(X_train_s, y_train)
-        pred_lr = lr.predict(X_test_s)
-
-        rf_all = train_random_forest(X_train_s, y_train, random_state=random_state)
-        pred_rf_all = rf_all.predict(X_test_s)
-
-        rf_np = train_random_forest(X_train_s[:, indices_np], y_train, random_state=random_state)
-        pred_rf_np = rf_np.predict(X_test_s[:, indices_np])
-
-        rf_skfreg = train_random_forest(X_train_s[:, indices_skfreg], y_train, random_state=random_state)
-        pred_rf_skfreg = rf_skfreg.predict(X_test_s[:, indices_skfreg])
-
-        y_pred = fuse_predictions(
-            [pred_lr, pred_rf_all, pred_rf_np, pred_rf_skfreg],
-            weights=[0.10, 0.35, 0.275, 0.275],
+        fusion_result = train_and_fuse_models(
+            X_train, X_train_s, X_test_s, y_train,
+            random_state=random_state, verbose=verbose,
         )
+        y_pred = fusion_result['pred_fused']
 
     elif "sklearn" in best_model_name.lower():
         indices_skfreg, _ = select_features_sklearn_freg(X_train, y_train, k=5)

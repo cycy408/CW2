@@ -1,20 +1,9 @@
-import numpy as np
-from sklearn.linear_model import LinearRegression
-
-# ============================================================
-# RANDOM SEED CONFIGURATION
-#   Set to an integer (e.g. 42) → fixed seed, results reproducible
-#   Set to None                  → random seed, results vary each run
-#   NOTE: When called from main.py, the seed is passed via data dict.
-# ============================================================
-RANDOM_SEED = 42
-
 from data_prep import load_data, split_data, standardize_features
-from feature_selection import select_features_numpy, select_features_sklearn_freg, compare_feature_sets
-from models import train_random_forest, print_feature_importance
-from model_fusion import fuse_predictions
+from model_fusion import train_and_fuse_models
 from evaluation import compute_mse, compute_mae, compute_r2
 from visualization import plot_fusion_vs_single
+
+RANDOM_SEED = 42
 
 
 
@@ -41,71 +30,18 @@ def main(data=None):
     # If predictions are pre-computed (called from main.py), skip directly to fusion
     if precomputed_predictions is not None:
         y_pred_lr, y_pred_rf_all, y_pred_rf_np, y_pred_rf_skfreg = precomputed_predictions
+        y_pred_fused = (0.10 * y_pred_lr + 0.35 * y_pred_rf_all +
+                        0.275 * y_pred_rf_np + 0.275 * y_pred_rf_skfreg)
     else:
-        # --- Feature selection ---
-        print("=" * 50)
-        print("Feature Selection A: NumPy Pearson Correlation")
-        print("=" * 50)
-        indices_np, scores_np = select_features_numpy(X_train, y_train, k=5)
-        print(f"Selected indices: {indices_np}")
-        print(f"Feature names:    {[feature_names[i] for i in indices_np]}")
-        print(f"Pearson scores:   {scores_np}")
-
-        print(f"\n{'=' * 50}")
-        print("Feature Selection B: sklearn SelectKBest + F-Regression")
-        print("=" * 50)
-        indices_skfreg, scores_skfreg = select_features_sklearn_freg(X_train, y_train, k=5)
-        print(f"Selected indices: {indices_skfreg}")
-        print(f"Feature names:    {[feature_names[i] for i in indices_skfreg]}")
-        print(f"F-scores:         {scores_skfreg}")
-
-        compare_feature_sets(indices_np, indices_skfreg, feature_names)
-
-        # --- Feature subsets ---
-        X_train_np = X_train_scaled[:, indices_np]
-        X_test_np = X_test_scaled[:, indices_np]
-        X_train_skfreg = X_train_scaled[:, indices_skfreg]
-        X_test_skfreg = X_test_scaled[:, indices_skfreg]
-
-        # --- Train models ---
-        print(f"\n{'=' * 50}")
-        print("Training: Linear Regression (all features)")
-        print("=" * 50)
-        lr_model = LinearRegression()
-        lr_model.fit(X_train_scaled, y_train)
-
-        print(f"{'=' * 50}")
-        print("Training: Random Forest (all features)")
-        print("=" * 50)
-        rf_all_model = train_random_forest(X_train_scaled, y_train, random_state=random_state)
-        print("Feature Importance (all features):")
-        print_feature_importance(rf_all_model, feature_names)
-
-        print(f"\n{'=' * 50}")
-        print("Training: Random Forest (NumPy Pearson features)")
-        print("=" * 50)
-        rf_np_model = train_random_forest(X_train_np, y_train, random_state=random_state)
-        print("Feature Importance (NumPy Pearson features):")
-        print_feature_importance(rf_np_model, [feature_names[i] for i in indices_np])
-
-        print(f"\n{'=' * 50}")
-        print("Training: Random Forest (sklearn F-Regression features)")
-        print("=" * 50)
-        rf_skfreg_model = train_random_forest(X_train_skfreg, y_train, random_state=random_state)
-        print("Feature Importance (sklearn F-Regression features):")
-        print_feature_importance(rf_skfreg_model, [feature_names[i] for i in indices_skfreg])
-
-        # --- Predictions ---
-        y_pred_lr = lr_model.predict(X_test_scaled)
-        y_pred_rf_all = rf_all_model.predict(X_test_scaled)
-        y_pred_rf_np = rf_np_model.predict(X_test_np)
-        y_pred_rf_skfreg = rf_skfreg_model.predict(X_test_skfreg)
-
-    # --- Weighted fusion ---
-    y_pred_fused = fuse_predictions(
-        [y_pred_lr, y_pred_rf_all, y_pred_rf_np, y_pred_rf_skfreg],
-        weights=[0.10, 0.35, 0.275, 0.275],
-    )
+        fusion_result = train_and_fuse_models(
+            X_train, X_train_scaled, X_test_scaled, y_train,
+            random_state=random_state, verbose=verbose,
+        )
+        y_pred_lr = fusion_result['pred_lr']
+        y_pred_rf_all = fusion_result['pred_rf_all']
+        y_pred_rf_np = fusion_result['pred_rf_np']
+        y_pred_rf_skfreg = fusion_result['pred_rf_skfreg']
+        y_pred_fused = fusion_result['pred_fused']
 
     # --- Performance comparison ---
     results = {
