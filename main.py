@@ -1,16 +1,3 @@
-# ============================================================
-# GAI USAGE DECLARATION
-#   AI-assisted areas (ChatGPT / Claude):
-#     - Initial draft of geospatial heatmap (later rewritten into
-#       visualization.py with manual grid-loop approach)
-#     - Debugging help for random-seed reproducibility issues
-#     - Code formatting and comment polishing
-#   Core logic (Pearson corr, F-test, weighted fusion, MSE/MAE,
-#   outlier detection) is manually implemented in NumPy.
-#   sklearn is used only for model training (LinearRegression,
-#   RandomForestRegressor, StandardScaler, SelectKBest).
-# ============================================================
-
 import os
 import numpy as np
 from sklearn.linear_model import LinearRegression
