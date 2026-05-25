@@ -37,7 +37,7 @@ def plot_mse_comparison(mse_dict, save_path="output/mse_comparison.png",
         print(f"[OK] Chart saved to {save_path}")
 
 
-# ========== NumPy-only implementation (grid calculation) + matplotlib ==========
+# ========== (grid calculation) + matplotlib ==========
 def plot_geospatial_heatmap(X_test, y_test, y_pred, lat_idx, lon_idx,
                             grid_size=10, save_path="output/geospatial_heatmap.png",
                             vmin=None, vmax=None, verbose=True):
